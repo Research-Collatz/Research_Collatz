@@ -1,0 +1,2 @@
+nodes,edges,weak_components,strong_components,largest_weak_component,largest_strong_component,tree_depth_max,tree_depth_mean_reachable,average_branching_factor,weak_component_diameter,diameter_method,betweenness_method
+100000,66667,33334,99998,39706,3,202,88.14594771571048,0.66667,,not computed: largest weak component has 39706 nodes,"approximate, k=512, seed=20260722"

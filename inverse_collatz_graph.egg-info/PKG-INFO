@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: inverse-collatz-graph
+Version: 0.1.0
+Summary: Reproducible experiments on bounded inverse Collatz graphs
+Requires-Python: >=3.10
+Requires-Dist: numpy<3,>=1.26
+Requires-Dist: pandas<3,>=2.1
+Requires-Dist: networkx<4,>=3.2
+Requires-Dist: matplotlib<4,>=3.8
+Requires-Dist: tqdm<5,>=4.66

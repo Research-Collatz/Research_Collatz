@@ -1,0 +1,4 @@
+# Optional GPU backend for larger Node2Vec experiments.
+# Install a wheel matching the Colab CUDA runtime from https://pytorch.org.
+torch>=2.2
+umap-learn>=0.5.12

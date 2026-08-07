@@ -1,0 +1,32 @@
+{
+  "backend": "torch",
+  "config": {
+    "backend": "torch",
+    "batch_size": 512,
+    "context_size": 5,
+    "dimensions": 128,
+    "epochs": 3,
+    "follow_reverse": true,
+    "learning_rate": 0.025,
+    "negative_samples": 5,
+    "p": 1.0,
+    "q": 1.0,
+    "seed": 20260723,
+    "walk_length": 40,
+    "walks_per_node": 2
+  },
+  "device": "cpu",
+  "embedding_dimensions": 128,
+  "graph": {
+    "domain_maximum": 100000,
+    "edge_orientation": "forward Collatz u -> T(u)",
+    "walk_orientation": "inverse"
+  },
+  "negative_sampling_distribution": "(total walk-graph degree)^0.75",
+  "node_count": 100000,
+  "numpy_version": "2.4.6",
+  "python_version": "3.14.4",
+  "runtime_seconds": 1091.6678794000036,
+  "study": "multi-scale convergence",
+  "torch_version": "2.13.0+cpu"
+}

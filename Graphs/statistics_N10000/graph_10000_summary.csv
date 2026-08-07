@@ -1,0 +1,2 @@
+nodes,edges,weak_components,strong_components,largest_weak_component,largest_strong_component,tree_depth_max,tree_depth_mean_reachable,average_branching_factor,weak_component_diameter,diameter_method,betweenness_method
+10000,6667,3334,9998,4235,3,160,68.22219598583234,0.6667,242,exact undirected diameter of largest weak component (n=4235),"approximate, k=512, seed=20260722"

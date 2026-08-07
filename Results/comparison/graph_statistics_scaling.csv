@@ -1,0 +1,4 @@
+max_node,nodes,edges,edges_per_node,weak_components,weak_components_per_node,strong_components,largest_weak_component,largest_weak_component_share,tree_depth_max,tree_depth_mean_reachable,average_branching_factor,weak_component_diameter_exact,weak_component_diameter_lower_bound,adjacency_spectral_radius_estimate,maximum_out_degree,diameter_method
+10000,10000,6667,0.6667,3334,0.3334,9998,4235,0.4235,160,68.22219598583234,0.6667,242.0,242,1.0039092413163142,1.0,exact undirected diameter of largest weak component (n=4235)
+50000,50000,33333,0.66666,16668,0.33336,49998,20019,0.40038,191,82.32034567161197,0.66666,,302,1.0057980768667891,1.0,not computed: largest weak component has 20019 nodes
+100000,100000,66667,0.66667,33334,0.33334,99998,39706,0.39706,202,88.14594771571048,0.66667,,332,1.008987458365356,1.0,not computed: largest weak component has 39706 nodes

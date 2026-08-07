@@ -1,0 +1,19 @@
+{
+  "silhouette_sample_size": 10000,
+  "density_subsample": 10000,
+  "density_label_conventions": {
+    "-1": "noise, examined by the clusterer and left unassigned",
+    "-2": "not evaluated: row lay outside the density fit subsample"
+  },
+  "metrics_table": "outputs\\scaling\\clustering_N10000_seed20260722\\clustering_metrics.csv",
+  "cluster_assignments": "outputs\\scaling\\clustering_N10000_seed20260722\\cluster_assignments.csv",
+  "property_summary_kmeans": "outputs\\scaling\\clustering_N10000_seed20260722\\cluster_summary_kmeans.csv",
+  "property_summary_hdbscan": "outputs\\scaling\\clustering_N10000_seed20260722\\cluster_summary_hdbscan.csv",
+  "property_associations": "outputs\\scaling\\clustering_N10000_seed20260722\\property_associations.csv",
+  "umap_kmeans_figure": "outputs\\scaling\\clustering_N10000_seed20260722\\umap_kmeans_clusters.png",
+  "umap_dbscan_figure": "outputs\\scaling\\clustering_N10000_seed20260722\\umap_dbscan_clusters.png",
+  "umap_hdbscan_figure": "outputs\\scaling\\clustering_N10000_seed20260722\\umap_hdbscan_clusters.png",
+  "property_distributions_kmeans": "outputs\\scaling\\clustering_N10000_seed20260722\\property_distributions_kmeans.png",
+  "property_heatmap_kmeans": "outputs\\scaling\\clustering_N10000_seed20260722\\property_heatmap_kmeans.png",
+  "cluster_evaluation_metrics": "outputs\\scaling\\clustering_N10000_seed20260722\\cluster_evaluation_metrics.png"
+}

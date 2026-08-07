@@ -1,0 +1,10 @@
+{
+  "graph_statistics_scaling": "outputs\\scaling\\comparison\\graph_statistics_scaling.csv",
+  "embedding_stability": "outputs\\scaling\\comparison\\embedding_stability.csv",
+  "knn_pool_sensitivity": "outputs\\scaling\\comparison\\knn_pool_sensitivity.csv",
+  "embedding_geometry": "outputs\\scaling\\comparison\\embedding_geometry.csv",
+  "cluster_stability": "outputs\\scaling\\comparison\\cluster_stability.csv",
+  "kmeans_sweep_metrics": "outputs\\scaling\\comparison\\kmeans_sweep_metrics.csv",
+  "prediction_scaling": "outputs\\scaling\\comparison\\prediction_scaling.csv",
+  "convergence_summary": "outputs\\scaling\\comparison\\convergence_summary.csv"
+}

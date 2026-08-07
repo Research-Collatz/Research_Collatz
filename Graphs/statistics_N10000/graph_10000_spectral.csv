@@ -1,0 +1,4 @@
+statistic,value,method
+adjacency_spectral_radius_estimate,1.0039092413163142,100-iteration edge-wise power iteration
+adjacency_frobenius_norm,81.65169930871004,sqrt(number of directed edges)
+maximum_out_degree,1.0,exact

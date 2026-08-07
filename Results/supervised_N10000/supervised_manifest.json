@@ -1,0 +1,7 @@
+{
+  "metrics_table": "outputs\\scaling\\supervised_N10000\\supervised_metrics.csv",
+  "feature_importances": "outputs\\scaling\\supervised_N10000\\feature_importances.csv",
+  "model_performance_comparison": "outputs\\scaling\\supervised_N10000\\model_performance_comparison.png",
+  "feature_importance_top": "outputs\\scaling\\supervised_N10000\\feature_importance_top.png",
+  "prediction_scatter_randomforest": "outputs\\scaling\\supervised_N10000\\prediction_scatter_randomforest.png"
+}

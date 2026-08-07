@@ -1,0 +1,31 @@
+\begin{table}
+\caption{Cross-scale convergence ratios. Values near 1 indicate cross-scale agreement matches within-scale noise floor.}
+\label{tab:convergence}
+\begin{tabular}{lllrrrrr}
+\toprule
+quantity & source & scale_label & within_scale_mean & within_scale_std & cross_scale_mean & cross_scale_std & ratio_to_noise_floor \\
+\midrule
+knn_overlap_k10 & embedding & 10000->100000 & 0.0005 & 0.0001 & 0.0006 & 0.0001 & 1.0698 \\
+knn_overlap_k10 & embedding & 10000->50000 & 0.0005 & 0.0001 & 0.0005 & 0.0000 & 1.0165 \\
+knn_overlap_k10 & embedding & 50000->100000 & 0.0005 & 0.0001 & 0.0005 & 0.0000 & 0.9332 \\
+knn_overlap_k50 & embedding & 10000->100000 & 0.0026 & 0.0001 & 0.0025 & 0.0001 & 0.9720 \\
+knn_overlap_k50 & embedding & 10000->50000 & 0.0026 & 0.0001 & 0.0026 & 0.0000 & 0.9926 \\
+knn_overlap_k50 & embedding & 50000->100000 & 0.0026 & 0.0001 & 0.0025 & 0.0001 & 0.9725 \\
+linear_cka & embedding & 10000->100000 & 0.0127 & 0.0001 & 0.0127 & 0.0001 & 1.0013 \\
+linear_cka & embedding & 10000->50000 & 0.0127 & 0.0001 & 0.0126 & 0.0001 & 0.9948 \\
+linear_cka & embedding & 50000->100000 & 0.0127 & 0.0001 & 0.0128 & 0.0001 & 1.0039 \\
+distance_spearman & embedding & 10000->100000 & -0.0001 & 0.0008 & -0.0000 & 0.0005 & 0.2967 \\
+distance_spearman & embedding & 10000->50000 & -0.0001 & 0.0008 & 0.0001 & 0.0005 & -1.6991 \\
+distance_spearman & embedding & 50000->100000 & -0.0001 & 0.0008 & 0.0002 & 0.0004 & -2.7414 \\
+procrustes_residual & embedding & 10000->100000 & 1.3446 & 0.0004 & 1.3446 & 0.0004 & 1.0000 \\
+procrustes_residual & embedding & 10000->50000 & 1.3446 & 0.0004 & 1.3448 & 0.0002 & 0.9999 \\
+procrustes_residual & embedding & 50000->100000 & 1.3446 & 0.0004 & 1.3444 & 0.0002 & 1.0002 \\
+adjusted_rand_index & clustering & 10000->100000 & -0.0000 & 0.0001 & 0.0000 & 0.0001 & -2.0394 \\
+adjusted_rand_index & clustering & 10000->50000 & -0.0000 & 0.0001 & -0.0001 & 0.0001 & 10.6737 \\
+adjusted_rand_index & clustering & 50000->100000 & -0.0000 & 0.0001 & -0.0001 & 0.0001 & 8.9464 \\
+adjusted_mutual_info & clustering & 10000->100000 & -0.0000 & 0.0001 & 0.0000 & 0.0002 & -2.2543 \\
+adjusted_mutual_info & clustering & 10000->50000 & -0.0000 & 0.0001 & -0.0002 & 0.0001 & 11.2948 \\
+adjusted_mutual_info & clustering & 50000->100000 & -0.0000 & 0.0001 & -0.0002 & 0.0002 & 9.7650 \\
+\bottomrule
+\end{tabular}
+\end{table}

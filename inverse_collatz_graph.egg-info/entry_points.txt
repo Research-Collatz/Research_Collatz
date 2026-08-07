@@ -1,0 +1,5 @@
+[console_scripts]
+collatz-clustering = collatz_graph.clustering_cli:main
+collatz-node2vec = collatz_graph.node2vec_cli:main
+collatz-node2vec-umap = collatz_graph.embedding_plots_cli:main
+collatz-supervised = collatz_graph.supervised_cli:main
