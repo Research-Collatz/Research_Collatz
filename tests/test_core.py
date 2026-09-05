@@ -29,11 +29,31 @@ def test_invalid_values() -> None:
         inverse_predecessors(True)
 
 
+def test_config_validation() -> None:
+    with pytest.raises(TypeError):
+        InverseGraphConfig(roots=[1])  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        InverseGraphConfig(max_nodes=10.5)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        InverseGraphConfig(max_nodes=0)
+    with pytest.raises(ValueError):
+        InverseGraphConfig(roots=(1, 2), max_nodes=1)
+
+
 def test_edges_obey_forward_map() -> None:
     graph = build_inverse_graph(InverseGraphConfig(roots=(1,), max_nodes=200, show_progress=False))
     assert isinstance(graph, nx.DiGraph)
     assert all(collatz_successor(source) == target for source, target in graph.edges)
     assert graph.number_of_nodes() <= 200
+
+
+def test_budget_is_a_hard_limit_without_early_termination() -> None:
+    graph = build_inverse_graph(
+        InverseGraphConfig(roots=(1,), max_nodes=3, show_progress=False)
+    )
+    assert list(graph.nodes) == [1, 2, 4]
+    assert set(graph.edges) == {(2, 1), (4, 2)}
+    assert graph.number_of_nodes() == 3
 
 
 def test_expansion_is_deterministic() -> None:
