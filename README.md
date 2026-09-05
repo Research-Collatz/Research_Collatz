@@ -241,3 +241,25 @@ coordinates, and their aligned feature table under the run's `umap/` folder.
 ## Reproducibility and experimental limitations
 
 Graph results depend on the selected root set and node budget. A bounded inverse graph can omit predecessors beyond the budget, so degree and depth statistics are censored. Layout coordinates are visualization artifacts; the plotting helper uses a fixed NetworkX seed for stable figures but those coordinates have no mathematical meaning. Report configuration values, package version, Python version, and dependency versions with published results.
+
+ 
+## Development quality checks
+
+Install development dependencies and run:
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m pytest
+ruff check .
+mypy collatz_graph
+```
+
+### Bounded inverse-graph truncation
+
+The node-bounded builder treats `max_nodes` as a hard admission limit. Once the limit is reached, undiscovered predecessors are skipped and traversal continues with already-admitted nodes. This avoids prematurely terminating the entire traversal while keeping the result within the requested node budget.
+
+The result remains a finite computational approximation. Degree, depth, connectivity, and embedding results can be affected by omitted predecessors or boundary nodes and must not be interpreted as properties of the infinite Collatz graph.
+
+### Reproducibility
+
+For published experiments, record the repository commit SHA alongside the existing configuration, Python version, and dependency versions. A fixed random seed improves reproducibility but does not guarantee bit-for-bit equality across different hardware, operating systems, CUDA/PyTorch versions, or numerical libraries.
