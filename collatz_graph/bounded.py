@@ -15,6 +15,7 @@ import json
 import logging
 from pathlib import Path
 import platform
+import subprocess
 from time import perf_counter
 from typing import Any
 
@@ -112,6 +113,22 @@ def _write_edges(graph: nx.DiGraph, path: Path) -> None:
             writer.writerow((source, target))
 
 
+def _git_commit_sha() -> str | None:
+    """Return the current Git commit SHA when running inside a Git checkout."""
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    sha = completed.stdout.strip()
+    return sha or None
+
+
 def _metadata(graph: nx.DiGraph, result: BoundedGraphBuildResult) -> dict[str, Any]:
     """Create JSON-serializable metadata for a saved graph."""
     return {
@@ -119,6 +136,8 @@ def _metadata(graph: nx.DiGraph, result: BoundedGraphBuildResult) -> dict[str, A
         "python_version": platform.python_version(),
         "networkx_version": nx.__version__,
         "runtime_seconds": result.runtime_seconds,
+        "platform": platform.platform(),
+        "git_commit_sha": _git_commit_sha(),
     }
 
 
