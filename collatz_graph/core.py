@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from dataclasses import dataclass
-import logging
 
 import networkx as nx
 from tqdm.auto import tqdm
@@ -58,7 +58,10 @@ class InverseGraphConfig:
             raise TypeError("roots must be a tuple of positive integers")
         if not self.roots:
             raise ValueError("roots must contain at least one value")
-        if any(not isinstance(root, int) or isinstance(root, bool) or root <= 0 for root in self.roots):
+        if any(
+            not isinstance(root, int) or isinstance(root, bool) or root <= 0
+            for root in self.roots
+        ):
             raise ValueError("roots must contain positive integers")
         if not isinstance(self.max_nodes, int) or isinstance(self.max_nodes, bool):
             raise TypeError("max_nodes must be an integer")
@@ -108,5 +111,9 @@ def build_inverse_graph(config: InverseGraphConfig) -> nx.DiGraph:
     finally:
         progress.close()
 
-    LOGGER.info("Built graph with %d nodes and %d edges", graph.number_of_nodes(), graph.number_of_edges())
+    LOGGER.info(
+        "Built graph with %d nodes and %d edges",
+        graph.number_of_nodes(),
+        graph.number_of_edges(),
+    )
     return graph

@@ -15,6 +15,13 @@ dependencies = [
     "tqdm>=4.66,<5",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
 [project.scripts]
 collatz-node2vec = "collatz_graph.node2vec_cli:main"
 collatz-node2vec-umap = "collatz_graph.embedding_plots_cli:main"

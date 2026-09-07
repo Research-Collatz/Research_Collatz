@@ -242,7 +242,6 @@ coordinates, and their aligned feature table under the run's `umap/` folder.
 
 Graph results depend on the selected root set and node budget. A bounded inverse graph can omit predecessors beyond the budget, so degree and depth statistics are censored. Layout coordinates are visualization artifacts; the plotting helper uses a fixed NetworkX seed for stable figures but those coordinates have no mathematical meaning. Report configuration values, package version, Python version, and dependency versions with published results.
 
- 
 ## Development quality checks
 
 Install development dependencies and run:
@@ -253,6 +252,13 @@ python -m pytest
 ruff check .
 mypy collatz_graph
 ```
+
+Validation on 2026-09-07: editable installation with the `dev` extra succeeds,
+and the full test suite passes (`21 passed`, with two existing sklearn future
+warnings). Ruff passes for the files changed by this PR. Repository-wide Ruff
+still reports pre-existing violations elsewhere. Mypy reports the same 68
+pre-existing errors as `origin/main`; none are introduced by the core or
+bounded-graph changes in this PR.
 
 ### Bounded inverse-graph truncation
 

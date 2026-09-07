@@ -10,12 +10,12 @@ reversed so that every retained edge can be checked directly with
 from __future__ import annotations
 
 import csv
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import platform
 import subprocess
+from dataclasses import dataclass
+from pathlib import Path
 from time import perf_counter
 from typing import Any
 
@@ -141,7 +141,9 @@ def _metadata(graph: nx.DiGraph, result: BoundedGraphBuildResult) -> dict[str, A
     }
 
 
-def save_graph_artifacts(result: BoundedGraphBuildResult, output_directory: str | Path) -> dict[str, Path]:
+def save_graph_artifacts(
+    result: BoundedGraphBuildResult, output_directory: str | Path
+) -> dict[str, Path]:
     """Stream node, edge, and metadata files to ``output_directory``.
 
     Files are named ``nodes_N.csv``, ``edges_N.csv``, and ``metadata_N.json``.
