@@ -26,7 +26,7 @@ Graphs/           # Graph statistics for all scales
 
 | Quantity | Stopping Time r | Best Target | Embedding max|r|
 |----------|----------------|-------------|-------------|
-| Ollivier-Ricci | -0.206 | ancestor_count (0.43) | 0.024 |
+| Neighborhood-overlap descriptor | -0.206 | ancestor_count (0.43) | 0.024 |
 | Branching Entropy | -0.125 | branching_factor (0.64) | 0.039 |
 | Ancestor Density (k=2) | +0.088 | ancestor_count (-0.70) | 0.028 |
 | Local Potential | -0.192 | distance_from_root (0.997) | 0.031 |
@@ -35,8 +35,8 @@ Graphs/           # Graph statistics for all scales
 ### Most Informative: Local Potential
 - Near-perfect proxy for graph distance (r=0.997 with distance_from_root)
 - 2nd strongest correlation with stopping time
-- Solves Delta u = log(ancestor_count) on functional graph
-- Computable in O(N) via forward pass
+- Defined by summing `log(ancestor_count + 1)` along the finite forward path
+- Computed with memoized path resolution on the bounded functional graph
 
 ### Best Embedding Alignment
 - Branching entropy <-> dim_105 (r=0.039)
@@ -44,9 +44,17 @@ Graphs/           # Graph statistics for all scales
 - Node2Vec optimizes random-walk co-occurrence, not intrinsic geometry
 
 ## Reproduction
-`ash
+```bash
 python run_all.py
-`
+```
+
+### Interpretation
+
+The reported relationships are empirical observations on finite,
+domain-truncated graphs. They do not constitute proofs about the infinite
+Collatz graph. The neighborhood-overlap descriptor is not Ollivier-Ricci
+curvature: it does not compute Wasserstein distance between neighborhood
+measures.
 
 ## Figures Generated (SVG + PDF)
 1. fig01_embedding_spectrum - Eigenvalue spectrum & cumulative variance
