@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from dataclasses import dataclass
-import logging
 
 import networkx as nx
 from tqdm.auto import tqdm
@@ -54,10 +54,19 @@ class InverseGraphConfig:
     show_progress: bool = True
 
     def __post_init__(self) -> None:
+        if not isinstance(self.roots, tuple):
+            raise TypeError("roots must be a tuple of positive integers")
         if not self.roots:
             raise ValueError("roots must contain at least one value")
-        if any(not isinstance(root, int) or isinstance(root, bool) or root <= 0 for root in self.roots):
+        if any(
+            not isinstance(root, int) or isinstance(root, bool) or root <= 0
+            for root in self.roots
+        ):
             raise ValueError("roots must contain positive integers")
+        if not isinstance(self.max_nodes, int) or isinstance(self.max_nodes, bool):
+            raise TypeError("max_nodes must be an integer")
+        if self.max_nodes <= 0:
+            raise ValueError("max_nodes must be positive")
         if self.max_nodes < len(set(self.roots)):
             raise ValueError("max_nodes must include every distinct root")
 
@@ -65,10 +74,10 @@ class InverseGraphConfig:
 def build_inverse_graph(config: InverseGraphConfig) -> nx.DiGraph:
     """Build a node-bounded inverse Collatz graph.
 
-    Edges retain forward orientation: ``predecessor -> successor``. Nodes are
-    discovered by breadth-first expansion from ``config.roots``. A candidate
-    is admitted only if doing so does not exceed ``max_nodes``; this makes the
-    truncation deterministic for a fixed root order and configuration.
+    Nodes are discovered breadth-first from ``config.roots``. Once the node
+    budget is reached, undiscovered predecessors are skipped rather than
+    terminating the entire expansion. This keeps the node budget hard while
+    allowing all already-admitted work to finish.
     """
     graph = nx.DiGraph()
     queue: deque[int] = deque()
@@ -83,15 +92,28 @@ def build_inverse_graph(config: InverseGraphConfig) -> nx.DiGraph:
             progress.update(1)
             target_depth = graph.nodes[target]["inverse_depth"]
             for predecessor in inverse_predecessors(target):
-                if predecessor not in graph and len(graph) >= config.max_nodes:
-                    LOGGER.info("Reached node budget of %d", config.max_nodes)
-                    return graph
                 if predecessor not in graph:
-                    graph.add_node(predecessor, root=False, inverse_depth=target_depth + 1)
+                    if len(graph) >= config.max_nodes:
+                        LOGGER.debug(
+                            "Node budget %d reached; skipping predecessor %d",
+                            config.max_nodes,
+                            predecessor,
+                        )
+                        continue
+                    graph.add_node(
+                        predecessor,
+                        root=False,
+                        inverse_depth=target_depth + 1,
+                    )
                     queue.append(predecessor)
+
                 graph.add_edge(predecessor, target)
     finally:
         progress.close()
 
-    LOGGER.info("Built graph with %d nodes and %d edges", graph.number_of_nodes(), graph.number_of_edges())
+    LOGGER.info(
+        "Built graph with %d nodes and %d edges",
+        graph.number_of_nodes(),
+        graph.number_of_edges(),
+    )
     return graph
