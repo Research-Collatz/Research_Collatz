@@ -9,11 +9,10 @@ CUDA device is available.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import json
 import logging
+from dataclasses import asdict, dataclass
 from pathlib import Path
-import platform
 from time import perf_counter
 from typing import Any
 
@@ -22,6 +21,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
+
+from .reproducibility import get_environment_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -266,10 +267,17 @@ def save_node2vec_result(
     np.save(paths["embeddings"], result.embeddings)
     pd.DataFrame({"node": result.node_ids}).to_csv(paths["nodes"], index=False)
     result.history.to_csv(paths["history"], index=False)
-    metadata: dict[str, Any] = {"config": asdict(result.config), "backend": result.backend, "device": result.device, "runtime_seconds": result.runtime_seconds, "node_count": int(len(result.node_ids)), "embedding_dimensions": int(result.embeddings.shape[1]), "python_version": platform.python_version(), "numpy_version": np.__version__, "negative_sampling_distribution": "(total walk-graph degree)^0.75"}
-    if result.backend == "torch":
-        import torch
-        metadata["torch_version"] = torch.__version__
+    metadata: dict[str, Any] = {
+        "config": asdict(result.config),
+        "backend": result.backend,
+        "device": result.device,
+        "runtime_seconds": result.runtime_seconds,
+        "node_count": int(len(result.node_ids)),
+        "embedding_dimensions": int(result.embeddings.shape[1]),
+        "numpy_version": np.__version__,
+        "negative_sampling_distribution": "(total walk-graph degree)^0.75",
+        **get_environment_metadata(),
+    }
     if extra_metadata:
         metadata.update(extra_metadata)
     paths["metadata"].write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")

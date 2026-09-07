@@ -17,6 +17,7 @@ from .geometric import (
     neighborhood_overlap_curvature,
 )
 from .node2vec import Node2VecConfig, Node2VecResult, save_node2vec_result, train_node2vec
+from .reproducibility import get_environment_metadata, get_git_commit_sha
 from .statistics import (
     GraphStatisticsResult,
     compute_graph_statistics,
@@ -50,4 +51,6 @@ __all__ = [
     "Node2VecResult",
     "train_node2vec",
     "save_node2vec_result",
+    "get_environment_metadata",
+    "get_git_commit_sha",
 ]

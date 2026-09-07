@@ -1,5 +1,7 @@
 """Correctness tests for exact inverse Collatz graph construction."""
 
+import json
+
 import networkx as nx
 import numpy as np
 import pytest
@@ -88,7 +90,11 @@ def test_bounded_graph_contains_only_in_domain_edges(tmp_path) -> None:
     assert all(path.exists() for path in paths.values())
     assert paths["nodes"].read_text(encoding="utf-8").splitlines()[0] == "node"
     assert paths["edges"].read_text(encoding="utf-8").splitlines()[0] == "source,target"
-    assert '"domain_maximum": 10' in paths["metadata"].read_text(encoding="utf-8")
+    metadata = json.loads(paths["metadata"].read_text(encoding="utf-8"))
+    assert metadata["domain_maximum"] == 10
+    assert metadata["git_commit_sha"]
+    assert metadata["python_version"]
+    assert metadata["os_name"]
 
 
 def test_bounded_graph_boundary_and_input_validation() -> None:
@@ -161,5 +167,7 @@ def test_node2vec_saved_artifacts_preserve_row_mapping(tmp_path) -> None:
     paths = save_node2vec_result(result, tmp_path, extra_metadata={"graph": {"domain_maximum": 10}})
     assert all(path.exists() for path in paths.values())
     assert np.array_equal(np.load(paths["embeddings"]), result.embeddings)
-    metadata = paths["metadata"].read_text(encoding="utf-8")
-    assert '"domain_maximum": 10' in metadata
+    metadata = json.loads(paths["metadata"].read_text(encoding="utf-8"))
+    assert metadata["graph"]["domain_maximum"] == 10
+    assert metadata["git_commit_sha"]
+    assert metadata["config"]["seed"] == 7

@@ -254,11 +254,10 @@ mypy collatz_graph
 ```
 
 Validation on 2026-09-07: editable installation with the `dev` extra succeeds,
-and the full test suite passes (`21 passed`, with two existing sklearn future
-warnings). Ruff passes for the files changed by this PR. Repository-wide Ruff
-still reports pre-existing violations elsewhere. Mypy reports the same 68
-pre-existing errors as `origin/main`; none are introduced by the core or
-bounded-graph changes in this PR.
+and the full test suite passes (`25 passed`, with two existing sklearn future
+warnings). Ruff passes for the files changed by the current PR. Repository-wide
+Ruff still reports pre-existing violations elsewhere. Mypy reports the same 68
+pre-existing errors as `origin/main`.
 
 ### Bounded inverse-graph truncation
 
@@ -268,4 +267,9 @@ The result remains a finite computational approximation. Degree, depth, connecti
 
 ### Reproducibility
 
-For published experiments, record the repository commit SHA alongside the existing configuration, Python version, and dependency versions. A fixed random seed improves reproducibility but does not guarantee bit-for-bit equality across different hardware, operating systems, CUDA/PyTorch versions, or numerical libraries.
+Graph and Node2Vec artifact metadata record the Git commit SHA, Python and
+package versions, operating system, machine and processor details, CPU count,
+and optional PyTorch/CUDA/GPU information. Node2Vec artifacts also snapshot
+the complete training configuration. A fixed random seed improves
+reproducibility but does not guarantee bit-for-bit equality across different
+hardware, operating systems, CUDA/PyTorch versions, or numerical libraries.
