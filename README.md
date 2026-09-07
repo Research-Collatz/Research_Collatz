@@ -260,6 +260,11 @@ warnings). Ruff passes for the files changed by the current PR. Repository-wide
 Ruff still reports pre-existing violations elsewhere. Mypy reports the same 68
 pre-existing errors as `origin/main`.
 
+Continuous integration runs the full test suite on Python 3.10 through 3.13.
+Ruff is required for the maintained pipeline and reproducibility files;
+repository-wide Ruff and mypy remain informational until their existing debt is
+reduced.
+
 ### Bounded inverse-graph truncation
 
 The node-bounded builder treats `max_nodes` as a hard admission limit. Once the limit is reached, undiscovered predecessors are skipped and traversal continues with already-admitted nodes. This avoids prematurely terminating the entire traversal while keeping the result within the requested node budget.
