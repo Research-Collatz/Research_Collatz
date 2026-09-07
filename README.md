@@ -218,9 +218,10 @@ Both defaults make the second-order walk unbiased apart from graph structure.
 nodes are sampled in proportion to total walk-graph degree raised to `0.75`,
 the standard word2vec/Node2Vec smoothing rule. `epochs=3` is the number of SGD
 passes over generated pairs, `learning_rate=0.025` is the SGD step size, and
-`batch_size=512` trades memory for optimization throughput. `backend="auto"`
-uses PyTorch/CUDA when available and otherwise uses deterministic NumPy CPU
-training. `follow_reverse=True` selects inverse walks; the CLI's
+`batch_size=512` bounds the in-memory positive-pair batch and trades memory for
+optimization throughput; walks and pairs are streamed rather than retained for
+the complete training run. `backend="auto"` uses PyTorch/CUDA when available
+and otherwise uses deterministic NumPy CPU training. `follow_reverse=True` selects inverse walks; the CLI's
 `--forward-walks` explicitly changes this. 
 
 ### UMAP embedding figures

@@ -16,7 +16,13 @@ from .geometric import (
     local_potential,
     neighborhood_overlap_curvature,
 )
-from .node2vec import Node2VecConfig, Node2VecResult, save_node2vec_result, train_node2vec
+from .node2vec import (
+    Node2VecConfig,
+    Node2VecResult,
+    iter_node2vec_walks,
+    save_node2vec_result,
+    train_node2vec,
+)
 from .reproducibility import get_environment_metadata, get_git_commit_sha
 from .statistics import (
     GraphStatisticsResult,
@@ -49,6 +55,7 @@ __all__ = [
     "save_publication_figures",
     "Node2VecConfig",
     "Node2VecResult",
+    "iter_node2vec_walks",
     "train_node2vec",
     "save_node2vec_result",
     "get_environment_metadata",
