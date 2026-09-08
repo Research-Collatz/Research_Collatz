@@ -68,7 +68,7 @@ class RunReference:
 
 def run_directory(output_root: str | Path, max_node: int, seed: int) -> Path:
     """Return the canonical directory for one scaling-study Node2Vec run."""
-    return Path(output_root) / f"node2vec_N{max_node}_seed{seed}"
+    return Path(output_root) / "embeddings" / f"node2vec_N{max_node}_seed{seed}"
 
 
 def enumerate_runs(

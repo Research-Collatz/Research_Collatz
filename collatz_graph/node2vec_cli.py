@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import json
 from pathlib import Path
 
 from .bounded import build_inverse_graph_up_to
 from .node2vec import Node2VecConfig, save_node2vec_result, train_node2vec
+from .reproducibility import write_experiment_manifest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,6 +45,24 @@ def main() -> None:
     )
     result = train_node2vec(graph_result.graph, config, show_progress=True)
     run_directory = args.output_dir / f"node2vec_N{args.max_node}_seed{args.seed}"
+    write_experiment_manifest(
+        run_directory,
+        {
+            "max_nodes": args.max_node,
+            "node2vec": asdict(config),
+        },
+        metadata={
+            "experiment_name": run_directory.name,
+            "pipeline": "node2vec",
+            "artifact_directories": {
+                "graph": "graph",
+                "features": "features",
+                "statistics": "statistics",
+                "embeddings": "embeddings",
+                "geometry": "geometry",
+            },
+        },
+    )
     paths = save_node2vec_result(
         result, run_directory,
         extra_metadata={"graph": {"domain_maximum": args.max_node, "edge_orientation": "forward Collatz u -> T(u)", "walk_orientation": "inverse" if config.follow_reverse else "forward"}},

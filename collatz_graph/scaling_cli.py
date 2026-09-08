@@ -21,6 +21,7 @@ Stages
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import json
 import logging
 from pathlib import Path
@@ -34,6 +35,7 @@ from .clustering import run_kmeans_sweep
 from .clustering_cli import execute_clustering_pipeline
 from .embedding_plots import create_umap_figures, load_embedding_features
 from .node2vec import Node2VecConfig, save_node2vec_result, train_node2vec
+from .reproducibility import write_experiment_manifest
 from .scaling import (
     SCALES,
     SEEDS,
@@ -87,15 +89,15 @@ STAGES = ("embed", "statistics", "umap", "cluster", "supervised", "analysis")
 
 
 def _statistics_directory(root: Path, max_node: int) -> Path:
-    return root / f"statistics_N{max_node}"
+    return root / "statistics" / f"statistics_N{max_node}"
 
 
 def _clustering_directory(root: Path, max_node: int, seed: int) -> Path:
-    return root / f"clustering_N{max_node}_seed{seed}"
+    return root / "analysis" / "clustering" / f"clustering_N{max_node}_seed{seed}"
 
 
 def _supervised_directory(root: Path, max_node: int) -> Path:
-    return root / f"supervised_N{max_node}"
+    return root / "analysis" / "supervised" / f"supervised_N{max_node}"
 
 
 def stage_embed(root: Path, runs: list[RunReference], force: bool) -> None:
@@ -290,7 +292,7 @@ def _collect_kmeans_metrics(root: Path, runs: list[RunReference]) -> pd.DataFram
 
 def stage_analysis(root: Path, runs: list[RunReference], reference_seed: int) -> None:
     """Build every cross-scale comparison table and figure."""
-    comparison = root / "comparison"
+    comparison = root / "analysis" / "comparison"
     comparison.mkdir(parents=True, exist_ok=True)
     scales = tuple(sorted({run.max_node for run in runs}))
 
@@ -370,10 +372,36 @@ def main() -> None:
     args = build_parser().parse_args()
     root = args.output_root
     root.mkdir(parents=True, exist_ok=True)
+    for directory in ("graph", "features", "statistics", "geometry", "analysis"):
+        (root / directory).mkdir(parents=True, exist_ok=True)
     scales = tuple(sorted(args.scales))
     seeds = tuple(args.seeds)
     reference_seed = seeds[0]
     runs = enumerate_runs(root, scales, seeds)
+    node2vec_config = Node2VecConfig(seed=reference_seed, backend="torch")
+    write_experiment_manifest(
+        root,
+        {
+            "max_nodes": list(scales),
+            "seeds": list(seeds),
+            "reference_seed": reference_seed,
+            "stages": list(args.stages),
+            "force": args.force,
+            "node2vec": {**asdict(node2vec_config), "seed": list(seeds)},
+        },
+        metadata={
+            "experiment_name": root.name,
+            "pipeline": "scaling",
+            "artifact_directories": {
+                "graph": "graph",
+                "features": "features",
+                "statistics": "statistics",
+                "embeddings": "embeddings",
+                "geometry": "geometry",
+                "analysis": "analysis",
+            },
+        },
+    )
 
     if "embed" in args.stages:
         stage_embed(root, runs, args.force)
