@@ -281,9 +281,9 @@ def _train_torch(
             context_tensor = torch.as_tensor(contexts[order], dtype=torch.long, device=device)
             negative_tensor = torch.multinomial(
                 negative_probabilities,
-                num_samples=len(batch) * config.negative_samples,
+                num_samples=len(targets) * config.negative_samples,
                 replacement=True,
-            ).reshape(len(batch), config.negative_samples)
+            ).reshape(len(targets), config.negative_samples)
             positive_score = (input_embedding(target_tensor) * output_embedding(context_tensor)).sum(dim=1)
             negative_score = (input_embedding(target_tensor).unsqueeze(1) * output_embedding(negative_tensor)).sum(dim=2)
             loss = torch.nn.functional.softplus(-positive_score).mean() + torch.nn.functional.softplus(negative_score).mean()

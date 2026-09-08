@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-import networkx as nx
+import networkx as nx  # type: ignore[import-untyped]
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 
 
 def _ancestor_count_array(
