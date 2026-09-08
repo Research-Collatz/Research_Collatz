@@ -218,9 +218,10 @@ Both defaults make the second-order walk unbiased apart from graph structure.
 nodes are sampled in proportion to total walk-graph degree raised to `0.75`,
 the standard word2vec/Node2Vec smoothing rule. `epochs=3` is the number of SGD
 passes over generated pairs, `learning_rate=0.025` is the SGD step size, and
-`batch_size=512` trades memory for optimization throughput. `backend="auto"`
-uses PyTorch/CUDA when available and otherwise uses deterministic NumPy CPU
-training. `follow_reverse=True` selects inverse walks; the CLI's
+`batch_size=512` bounds the in-memory positive-pair batch and trades memory for
+optimization throughput; walks and pairs are streamed rather than retained for
+the complete training run. `backend="auto"` uses PyTorch/CUDA when available
+and otherwise uses deterministic NumPy CPU training. `follow_reverse=True` selects inverse walks; the CLI's
 `--forward-walks` explicitly changes this. 
 
 ### UMAP embedding figures
@@ -254,11 +255,15 @@ mypy collatz_graph
 ```
 
 Validation on 2026-09-07: editable installation with the `dev` extra succeeds,
-and the full test suite passes (`21 passed`, with two existing sklearn future
-warnings). Ruff passes for the files changed by this PR. Repository-wide Ruff
-still reports pre-existing violations elsewhere. Mypy reports the same 68
-pre-existing errors as `origin/main`; none are introduced by the core or
-bounded-graph changes in this PR.
+and the full test suite passes (`25 passed`, with two existing sklearn future
+warnings). Ruff passes for the files changed by the current PR. Repository-wide
+Ruff still reports pre-existing violations elsewhere. Mypy reports the same 68
+pre-existing errors as `origin/main`.
+
+Continuous integration runs the full test suite on Python 3.10 through 3.13.
+Ruff is required for the maintained pipeline and reproducibility files;
+repository-wide Ruff and mypy remain informational until their existing debt is
+reduced.
 
 ### Bounded inverse-graph truncation
 
@@ -268,4 +273,9 @@ The result remains a finite computational approximation. Degree, depth, connecti
 
 ### Reproducibility
 
-For published experiments, record the repository commit SHA alongside the existing configuration, Python version, and dependency versions. A fixed random seed improves reproducibility but does not guarantee bit-for-bit equality across different hardware, operating systems, CUDA/PyTorch versions, or numerical libraries.
+Graph and Node2Vec artifact metadata record the Git commit SHA, Python and
+package versions, operating system, machine and processor details, CPU count,
+and optional PyTorch/CUDA/GPU information. Node2Vec artifacts also snapshot
+the complete training configuration. A fixed random seed improves
+reproducibility but does not guarantee bit-for-bit equality across different
+hardware, operating systems, CUDA/PyTorch versions, or numerical libraries.

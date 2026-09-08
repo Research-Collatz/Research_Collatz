@@ -12,8 +12,6 @@ from __future__ import annotations
 import csv
 import json
 import logging
-import platform
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -23,6 +21,7 @@ import networkx as nx
 from tqdm.auto import tqdm
 
 from .core import collatz_successor
+from .reproducibility import get_environment_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -113,31 +112,13 @@ def _write_edges(graph: nx.DiGraph, path: Path) -> None:
             writer.writerow((source, target))
 
 
-def _git_commit_sha() -> str | None:
-    """Return the current Git commit SHA when running inside a Git checkout."""
-    try:
-        completed = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return None
-    sha = completed.stdout.strip()
-    return sha or None
-
-
 def _metadata(graph: nx.DiGraph, result: BoundedGraphBuildResult) -> dict[str, Any]:
     """Create JSON-serializable metadata for a saved graph."""
     return {
         **graph.graph,
-        "python_version": platform.python_version(),
         "networkx_version": nx.__version__,
         "runtime_seconds": result.runtime_seconds,
-        "platform": platform.platform(),
-        "git_commit_sha": _git_commit_sha(),
+        **get_environment_metadata(),
     }
 
 

@@ -9,11 +9,11 @@ CUDA device is available.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import json
 import logging
+from collections.abc import Callable, Iterator
+from dataclasses import asdict, dataclass
 from pathlib import Path
-import platform
 from time import perf_counter
 from typing import Any
 
@@ -22,6 +22,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
+
+from .reproducibility import get_environment_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -99,14 +101,15 @@ def _transition_probabilities(graph: nx.DiGraph, current: int, previous: int | N
     return neighbors, weights / weights.sum()
 
 
-def generate_node2vec_walks(graph: nx.DiGraph, config: Node2VecConfig) -> tuple[np.ndarray, list[np.ndarray]]:
-    """Generate deterministic biased random walks and return node indexing."""
+def iter_node2vec_walks(
+    graph: nx.DiGraph, config: Node2VecConfig, *, seed: int | None = None
+) -> Iterator[np.ndarray]:
+    """Yield deterministic biased random walks without retaining all walks."""
     if not graph:
         raise ValueError("graph must contain nodes")
     node_ids = np.asarray(sorted(graph.nodes), dtype=np.int64)
-    rng = np.random.default_rng(config.seed)
+    rng = np.random.default_rng(config.seed if seed is None else seed)
     walk_graph = graph.reverse(copy=False) if config.follow_reverse else graph
-    walks: list[np.ndarray] = []
     for _ in range(config.walks_per_node):
         starts = node_ids.copy()
         rng.shuffle(starts)
@@ -121,8 +124,15 @@ def generate_node2vec_walks(graph: nx.DiGraph, config: Node2VecConfig) -> tuple[
                 next_node = int(rng.choice(neighbors, p=probabilities))
                 previous, current = current, next_node
                 walk.append(current)
-            walks.append(np.asarray(walk, dtype=np.int64))
-    return node_ids, walks
+            yield np.asarray(walk, dtype=np.int64)
+
+
+def generate_node2vec_walks(
+    graph: nx.DiGraph, config: Node2VecConfig
+) -> tuple[np.ndarray, list[np.ndarray]]:
+    """Generate deterministic walks and return them as a compatibility list."""
+    node_ids = np.asarray(sorted(graph.nodes), dtype=np.int64)
+    return node_ids, list(iter_node2vec_walks(graph, config))
 
 
 def _training_pairs(walks: list[np.ndarray], node_to_index: dict[int, int], context_size: int) -> tuple[np.ndarray, np.ndarray]:
@@ -137,6 +147,34 @@ def _training_pairs(walks: list[np.ndarray], node_to_index: dict[int, int], cont
                 targets.append(target)
                 contexts.append(context)
     return np.asarray(targets, dtype=np.int64), np.asarray(contexts, dtype=np.int64)
+
+
+def _iter_training_batches(
+    walks: Iterator[np.ndarray],
+    node_to_index: dict[int, int],
+    context_size: int,
+    batch_size: int,
+) -> Iterator[tuple[np.ndarray, np.ndarray]]:
+    """Yield positive pairs in bounded batches from a walk iterator."""
+    targets: list[int] = []
+    contexts: list[int] = []
+    for walk in walks:
+        indices = [node_to_index[int(node)] for node in walk]
+        for center, target in enumerate(indices):
+            left = max(0, center - context_size)
+            right = min(len(indices), center + context_size + 1)
+            for context in indices[left:center] + indices[center + 1:right]:
+                targets.append(target)
+                contexts.append(context)
+                if len(targets) == batch_size:
+                    yield (
+                        np.asarray(targets, dtype=np.int64),
+                        np.asarray(contexts, dtype=np.int64),
+                    )
+                    targets.clear()
+                    contexts.clear()
+    if targets:
+        yield np.asarray(targets, dtype=np.int64), np.asarray(contexts, dtype=np.int64)
 
 
 def _negative_sampling_distribution(
@@ -158,16 +196,28 @@ def _sigmoid(value: float) -> float:
     return 1.0 / (1.0 + np.exp(-clipped))
 
 
-def _train_numpy(targets: np.ndarray, contexts: np.ndarray, node_count: int, negative_distribution: np.ndarray, config: Node2VecConfig, rng: np.random.Generator, show_progress: bool) -> tuple[np.ndarray, pd.DataFrame]:
+def _train_numpy(
+    batch_factory: Callable[[int], Iterator[tuple[np.ndarray, np.ndarray]]],
+    node_count: int,
+    negative_distribution: np.ndarray,
+    config: Node2VecConfig,
+    rng: np.random.Generator,
+    show_progress: bool,
+) -> tuple[np.ndarray, pd.DataFrame]:
     input_embeddings = rng.normal(0.0, 1.0 / config.dimensions, (node_count, config.dimensions)).astype(np.float32)
     output_embeddings = np.zeros_like(input_embeddings)
     history: list[dict[str, float | int]] = []
     for epoch in range(config.epochs):
-        order = rng.permutation(len(targets))
         loss_sum = 0.0
-        for position in tqdm(range(0, len(order), config.batch_size), desc=f"Node2Vec epoch {epoch + 1}", disable=not show_progress):
-            batch = order[position:position + config.batch_size]
-            for target, context in zip(targets[batch], contexts[batch]):
+        pair_count = 0
+        for targets, contexts in tqdm(
+            batch_factory(epoch),
+            desc=f"Node2Vec epoch {epoch + 1}",
+            disable=not show_progress,
+        ):
+            pair_count += len(targets)
+            order = rng.permutation(len(targets))
+            for target, context in zip(targets[order], contexts[order], strict=True):
                 negatives = rng.choice(node_count, size=config.negative_samples, p=negative_distribution)
                 input_before = input_embeddings[target].copy()
                 positive_probability = _sigmoid(float(np.dot(input_before, output_embeddings[context])))
@@ -181,13 +231,22 @@ def _train_numpy(targets: np.ndarray, contexts: np.ndarray, node_count: int, neg
                     input_embeddings[target] += negative_gradient * output_embeddings[negative]
                     output_embeddings[negative] += negative_gradient * input_before
                     loss_sum -= np.log(max(1.0 - negative_probability, 1e-12))
-        history.append({"epoch": epoch + 1, "loss": loss_sum / max(1, len(targets)), "pairs": len(targets), "learning_rate": config.learning_rate})
+        if pair_count == 0:
+            raise ValueError("walk configuration produced no skip-gram training pairs")
+        history.append({"epoch": epoch + 1, "loss": loss_sum / pair_count, "pairs": pair_count, "learning_rate": config.learning_rate})
     embeddings = input_embeddings + output_embeddings
     embeddings /= np.maximum(np.linalg.norm(embeddings, axis=1, keepdims=True), 1e-12)
     return embeddings.astype(np.float32), pd.DataFrame(history)
 
 
-def _train_torch(targets: np.ndarray, contexts: np.ndarray, node_count: int, negative_distribution: np.ndarray, config: Node2VecConfig, device: str, show_progress: bool) -> tuple[np.ndarray, pd.DataFrame]:
+def _train_torch(
+    batch_factory: Callable[[int], Iterator[tuple[np.ndarray, np.ndarray]]],
+    node_count: int,
+    negative_distribution: np.ndarray,
+    config: Node2VecConfig,
+    device: str,
+    show_progress: bool,
+) -> tuple[np.ndarray, pd.DataFrame]:
     """Train skip-gram negative sampling on CPU or CUDA with PyTorch."""
     import torch
     from torch import nn
@@ -208,25 +267,33 @@ def _train_torch(targets: np.ndarray, contexts: np.ndarray, node_count: int, neg
     negative_probabilities = torch.as_tensor(negative_distribution, dtype=torch.float32, device=device)
     history: list[dict[str, float | int]] = []
     for epoch in range(config.epochs):
-        order = np.random.default_rng(config.seed + 1000 + epoch).permutation(len(targets))
         loss_sum = 0.0
-        for position in tqdm(range(0, len(order), config.batch_size), desc=f"Node2Vec epoch {epoch + 1}", disable=not show_progress):
-            batch = order[position:position + config.batch_size]
-            target_tensor = torch.as_tensor(targets[batch], dtype=torch.long, device=device)
-            context_tensor = torch.as_tensor(contexts[batch], dtype=torch.long, device=device)
+        pair_count = 0
+        batch_rng = np.random.default_rng(config.seed + 1000 + epoch)
+        for targets, contexts in tqdm(
+            batch_factory(epoch),
+            desc=f"Node2Vec epoch {epoch + 1}",
+            disable=not show_progress,
+        ):
+            pair_count += len(targets)
+            order = batch_rng.permutation(len(targets))
+            target_tensor = torch.as_tensor(targets[order], dtype=torch.long, device=device)
+            context_tensor = torch.as_tensor(contexts[order], dtype=torch.long, device=device)
             negative_tensor = torch.multinomial(
                 negative_probabilities,
-                num_samples=len(batch) * config.negative_samples,
+                num_samples=len(targets) * config.negative_samples,
                 replacement=True,
-            ).reshape(len(batch), config.negative_samples)
+            ).reshape(len(targets), config.negative_samples)
             positive_score = (input_embedding(target_tensor) * output_embedding(context_tensor)).sum(dim=1)
             negative_score = (input_embedding(target_tensor).unsqueeze(1) * output_embedding(negative_tensor)).sum(dim=2)
             loss = torch.nn.functional.softplus(-positive_score).mean() + torch.nn.functional.softplus(negative_score).mean()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
-            loss_sum += float(loss.detach().cpu()) * len(batch)
-        history.append({"epoch": epoch + 1, "loss": loss_sum / max(1, len(targets)), "pairs": len(targets), "learning_rate": config.learning_rate})
+            loss_sum += float(loss.detach().cpu()) * len(targets)
+        if pair_count == 0:
+            raise ValueError("walk configuration produced no skip-gram training pairs")
+        history.append({"epoch": epoch + 1, "loss": loss_sum / pair_count, "pairs": pair_count, "learning_rate": config.learning_rate})
     embeddings = (input_embedding.weight.detach() + output_embedding.weight.detach()).cpu().numpy()
     embeddings /= np.maximum(np.linalg.norm(embeddings, axis=1, keepdims=True), 1e-12)
     return embeddings.astype(np.float32), pd.DataFrame(history)
@@ -237,16 +304,38 @@ def train_node2vec(graph: nx.DiGraph, config: Node2VecConfig | None = None, *, s
     config = config or Node2VecConfig()
     backend, device = _select_backend(config)
     start = perf_counter()
-    node_ids, walks = generate_node2vec_walks(graph, config)
+    if not graph:
+        raise ValueError("graph must contain nodes")
+    node_ids = np.asarray(sorted(graph.nodes), dtype=np.int64)
     node_to_index = {int(node): index for index, node in enumerate(node_ids)}
-    targets, contexts = _training_pairs(walks, node_to_index, config.context_size)
-    if len(targets) == 0:
-        raise ValueError("walk configuration produced no skip-gram training pairs")
+
+    def batch_factory(_epoch: int) -> Iterator[tuple[np.ndarray, np.ndarray]]:
+        return _iter_training_batches(
+            iter_node2vec_walks(graph, config),
+            node_to_index,
+            config.context_size,
+            config.batch_size,
+        )
+
     negative_distribution = _negative_sampling_distribution(graph, node_ids, config)
     if backend == "torch":
-        embeddings, history = _train_torch(targets, contexts, len(node_ids), negative_distribution, config, device, show_progress)
+        embeddings, history = _train_torch(
+            batch_factory,
+            len(node_ids),
+            negative_distribution,
+            config,
+            device,
+            show_progress,
+        )
     else:
-        embeddings, history = _train_numpy(targets, contexts, len(node_ids), negative_distribution, config, np.random.default_rng(config.seed + 1), show_progress)
+        embeddings, history = _train_numpy(
+            batch_factory,
+            len(node_ids),
+            negative_distribution,
+            config,
+            np.random.default_rng(config.seed + 1),
+            show_progress,
+        )
     runtime_seconds = perf_counter() - start
     LOGGER.info("Trained Node2Vec embeddings for %d nodes in %.6f s", len(node_ids), runtime_seconds)
     return Node2VecResult(node_ids, embeddings, history, config, backend, device, runtime_seconds)
@@ -266,10 +355,17 @@ def save_node2vec_result(
     np.save(paths["embeddings"], result.embeddings)
     pd.DataFrame({"node": result.node_ids}).to_csv(paths["nodes"], index=False)
     result.history.to_csv(paths["history"], index=False)
-    metadata: dict[str, Any] = {"config": asdict(result.config), "backend": result.backend, "device": result.device, "runtime_seconds": result.runtime_seconds, "node_count": int(len(result.node_ids)), "embedding_dimensions": int(result.embeddings.shape[1]), "python_version": platform.python_version(), "numpy_version": np.__version__, "negative_sampling_distribution": "(total walk-graph degree)^0.75"}
-    if result.backend == "torch":
-        import torch
-        metadata["torch_version"] = torch.__version__
+    metadata: dict[str, Any] = {
+        "config": asdict(result.config),
+        "backend": result.backend,
+        "device": result.device,
+        "runtime_seconds": result.runtime_seconds,
+        "node_count": int(len(result.node_ids)),
+        "embedding_dimensions": int(result.embeddings.shape[1]),
+        "numpy_version": np.__version__,
+        "negative_sampling_distribution": "(total walk-graph degree)^0.75",
+        **get_environment_metadata(),
+    }
     if extra_metadata:
         metadata.update(extra_metadata)
     paths["metadata"].write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
