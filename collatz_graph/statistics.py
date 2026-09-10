@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 
@@ -29,13 +29,17 @@ class GraphStatisticsResult:
     diameter_method: str
 
 
-def _pagerank_numpy(graph: nx.DiGraph, alpha: float = 0.85, tolerance: float = 1e-10, max_iter: int = 200) -> dict[int, float]:
+def _pagerank_numpy(
+    graph: nx.DiGraph, alpha: float = 0.85, tolerance: float = 1e-10, max_iter: int = 200
+) -> dict[int, float]:
     """Compute PageRank with an edge-streamed NumPy power iteration."""
     nodes = list(graph.nodes)
     index = {node: position for position, node in enumerate(nodes)}
     n_nodes = len(nodes)
     rank = np.full(n_nodes, 1.0 / n_nodes, dtype=np.float64)
-    out_degree = np.fromiter((graph.out_degree(node) for node in nodes), dtype=np.int64, count=n_nodes)
+    out_degree = np.fromiter(
+        (graph.out_degree(node) for node in nodes), dtype=np.int64, count=n_nodes
+    )
     for _ in range(max_iter):
         next_rank = np.zeros(n_nodes, dtype=np.float64)
         dangling_mass = float(rank[out_degree == 0].sum())
@@ -149,7 +153,9 @@ def compute_graph_statistics(
         betweenness_method = "exact"
     else:
         sample_size = min(betweenness_k or 512, n_nodes)
-        betweenness = nx.betweenness_centrality(graph, k=sample_size, normalized=True, seed=random_seed)
+        betweenness = nx.betweenness_centrality(
+            graph, k=sample_size, normalized=True, seed=random_seed
+        )
         betweenness_method = f"approximate, k={sample_size}, seed={random_seed}"
     pagerank = _pagerank_numpy(graph)
     closeness = nx.closeness_centrality(graph)
@@ -197,7 +203,10 @@ def compute_graph_statistics(
     largest_weak = graph.subgraph(weak_components[0]).copy()
     if len(largest_weak) <= exact_diameter_limit:
         diameter = nx.diameter(largest_weak.to_undirected())
-        diameter_method = f"exact undirected diameter of largest weak component (n={len(largest_weak)})"
+        diameter_method = (
+            "exact undirected diameter of largest weak component "
+            f"(n={len(largest_weak)})"
+        )
     else:
         diameter = np.nan
         diameter_method = f"not computed: largest weak component has {len(largest_weak)} nodes"
@@ -235,7 +244,9 @@ def compute_graph_statistics(
     )
 
 
-def save_statistics_tables(result: GraphStatisticsResult, output_directory: str | Path, stem: str = "graph") -> dict[str, Path]:
+def save_statistics_tables(
+    result: GraphStatisticsResult, output_directory: str | Path, stem: str = "graph"
+) -> dict[str, Path]:
     """Save all publication tables as CSV files."""
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
@@ -269,7 +280,12 @@ def save_publication_figures(
 
     degree = result.degree_distribution
     fig, ax = plt.subplots(figsize=(6.5, 4.2), constrained_layout=True)
-    ax.bar(degree["in_degree"].astype(str), degree["node_count"], color="#2166ac", label="in-degree")
+    ax.bar(
+        degree["in_degree"].astype(str),
+        degree["node_count"],
+        color="#2166ac",
+        label="in-degree",
+    )
     ax.set_xlabel("In-degree")
     ax.set_ylabel("Number of nodes")
     ax.set_title("Inverse predecessor degree distribution")
