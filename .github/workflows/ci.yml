@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, improve-core-reproducibility]
+    branches: [main, improve-core-reproducibility, improve-reproducibility-manifests]
   pull_request:
 
 jobs:
@@ -39,8 +39,8 @@ jobs:
         run: >-
           python -m ruff check
           run_all.py
-          collatz_graph/reproducibility.py
-          tests/test_node2vec_streaming.py
+      - name: Build package
+        run: python -m build
       - name: Repository-wide Ruff baseline
         continue-on-error: true
         run: python -m ruff check .
