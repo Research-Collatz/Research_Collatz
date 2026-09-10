@@ -153,12 +153,29 @@ def execute_clustering_pipeline(
     LOGGER.info("Generating plots and figures...")
 
     # Plot metrics comparison curve
-    plot_metrics_comparison(kmeans_df, dbscan_df, hdbscan_df, out_dir / "cluster_evaluation_metrics")
+    plot_metrics_comparison(
+        kmeans_df, dbscan_df, hdbscan_df, out_dir / "cluster_evaluation_metrics"
+    )
 
     # Plot UMAP cluster scatter plots
-    plot_umap_clusters(umap_coords, kmeans_best_labels, f"KMeans Clusters (k={best_k})", out_dir / "umap_kmeans_clusters")
-    plot_umap_clusters(umap_coords, dbscan_best_labels, f"DBSCAN Clusters ({best_db_key})", out_dir / "umap_dbscan_clusters")
-    plot_umap_clusters(umap_coords, hdbscan_best_labels, f"HDBSCAN Clusters (mcs={best_mcs})", out_dir / "umap_hdbscan_clusters")
+    plot_umap_clusters(
+        umap_coords,
+        kmeans_best_labels,
+        f"KMeans Clusters (k={best_k})",
+        out_dir / "umap_kmeans_clusters",
+    )
+    plot_umap_clusters(
+        umap_coords,
+        dbscan_best_labels,
+        f"DBSCAN Clusters ({best_db_key})",
+        out_dir / "umap_dbscan_clusters",
+    )
+    plot_umap_clusters(
+        umap_coords,
+        hdbscan_best_labels,
+        f"HDBSCAN Clusters (mcs={best_mcs})",
+        out_dir / "umap_hdbscan_clusters",
+    )
 
     # Plot property distributions
     prop_specs = [
@@ -170,12 +187,26 @@ def execute_clustering_pipeline(
         ("distance_from_root", "Distance from Root", False),
     ]
 
-    plot_property_distributions(features_df, kmeans_best_labels, prop_specs, f"KMeans (k={best_k})", out_dir / "property_distributions_kmeans")
-    plot_property_distributions(features_df, hdbscan_best_labels, prop_specs, f"HDBSCAN (mcs={best_mcs})", out_dir / "property_distributions_hdbscan")
+    plot_property_distributions(
+        features_df,
+        kmeans_best_labels,
+        prop_specs,
+        f"KMeans (k={best_k})",
+        out_dir / "property_distributions_kmeans",
+    )
+    plot_property_distributions(
+        features_df,
+        hdbscan_best_labels,
+        prop_specs,
+        f"HDBSCAN (mcs={best_mcs})",
+        out_dir / "property_distributions_hdbscan",
+    )
 
     # Plot property heatmaps
     plot_property_heatmap(summary_kmeans, f"KMeans k={best_k}", out_dir / "property_heatmap_kmeans")
-    plot_property_heatmap(summary_hdbscan, f"HDBSCAN mcs={best_mcs}", out_dir / "property_heatmap_hdbscan")
+    plot_property_heatmap(
+        summary_hdbscan, f"HDBSCAN mcs={best_mcs}", out_dir / "property_heatmap_hdbscan"
+    )
 
     manifest = {
         "silhouette_sample_size": silhouette_sample_size,
@@ -205,13 +236,33 @@ def execute_clustering_pipeline(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Cluster Node2Vec embeddings and evaluate Collatz property alignments.")
-    parser.add_argument("--run-dir", type=Path, required=True, help="Directory containing node2vec artifacts.")
-    parser.add_argument("--output-dir", type=Path, required=True, help="Directory to save clustering artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Cluster Node2Vec embeddings and evaluate Collatz property alignments."
+    )
+    parser.add_argument(
+        "--run-dir", type=Path, required=True, help="Directory containing node2vec artifacts."
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, required=True, help="Directory to save clustering artifacts."
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
-    parser.add_argument("--silhouette-sample-size", type=int, default=None, help="Rows sampled for the O(n^2) silhouette score; None evaluates every row.")
-    parser.add_argument("--density-subsample", type=int, default=None, help="Rows used to fit DBSCAN/HDBSCAN; None fits every row.")
-    parser.add_argument("--save-kmeans-labels", action="store_true", help="Also write every swept KMeans labelling to kmeans_labels.npz.")
+    parser.add_argument(
+        "--silhouette-sample-size",
+        type=int,
+        default=None,
+        help="Rows sampled for the O(n^2) silhouette score; None evaluates every row.",
+    )
+    parser.add_argument(
+        "--density-subsample",
+        type=int,
+        default=None,
+        help="Rows used to fit DBSCAN/HDBSCAN; None fits every row.",
+    )
+    parser.add_argument(
+        "--save-kmeans-labels",
+        action="store_true",
+        help="Also write every swept KMeans labelling to kmeans_labels.npz.",
+    )
     args = parser.parse_args()
 
     manifest = execute_clustering_pipeline(
