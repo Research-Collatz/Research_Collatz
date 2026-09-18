@@ -19,10 +19,10 @@ numbers can be divided.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from itertools import combinations
 import json
 import logging
+from dataclasses import dataclass
+from itertools import combinations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -120,7 +120,7 @@ def assert_nested_domains(node_id_arrays: dict[int, np.ndarray]) -> None:
     expected without any visible error.
     """
     scales = sorted(node_id_arrays)
-    for smaller, larger in zip(scales, scales[1:]):
+    for smaller, larger in zip(scales, scales[1:], strict=True):
         missing = np.setdiff1d(node_id_arrays[smaller], node_id_arrays[larger], assume_unique=True)
         if missing.size:
             raise ValueError(
@@ -287,7 +287,9 @@ def geometry_descriptors(
     }
 
 
-def double_sweep_diameter_bound(graph: nx.DiGraph, sweeps: int = 4, seed: int = ANALYSIS_SEED) -> int:
+def double_sweep_diameter_bound(
+    graph: nx.DiGraph, sweeps: int = 4, seed: int = ANALYSIS_SEED,
+) -> int:
     """Return a lower bound on the undirected diameter of the largest weak component.
 
     ``compute_graph_statistics`` only reports an exact diameter when the largest
@@ -364,7 +366,7 @@ def compute_embedding_stability(
 
     scales = sorted(by_scale)
     for smaller, larger in combinations(scales, 2):
-        for first, second in zip(by_scale[smaller], by_scale[larger]):
+        for first, second in zip(by_scale[smaller], by_scale[larger], strict=True):
             if first.seed != second.seed:
                 raise ValueError("cross-scale comparison expects seed-matched runs")
             LOGGER.info("Cross-scale pair %s vs %s", first.label, second.label)
@@ -504,13 +506,15 @@ def compute_cluster_stability(
                         adjusted_rand_score(label_sets[first.label], label_sets[second.label])
                     ),
                     "adjusted_mutual_info": float(
-                        adjusted_mutual_info_score(label_sets[first.label], label_sets[second.label])
+                        adjusted_mutual_info_score(
+                            label_sets[first.label], label_sets[second.label],
+                        )
                     ),
                 }
             )
 
     for smaller, larger in combinations(sorted(by_scale), 2):
-        for first, second in zip(by_scale[smaller], by_scale[larger]):
+        for first, second in zip(by_scale[smaller], by_scale[larger], strict=True):
             records.append(
                 {
                     "comparison_type": "cross_scale",
@@ -524,7 +528,9 @@ def compute_cluster_stability(
                         adjusted_rand_score(label_sets[first.label], label_sets[second.label])
                     ),
                     "adjusted_mutual_info": float(
-                        adjusted_mutual_info_score(label_sets[first.label], label_sets[second.label])
+                        adjusted_mutual_info_score(
+                            label_sets[first.label], label_sets[second.label],
+                        )
                     ),
                 }
             )
@@ -647,7 +653,9 @@ def plot_graph_scaling(table: pd.DataFrame, output_path: Path) -> None:
     ]
     with plt.rc_context(PLOT_STYLE):
         figure, axes = plt.subplots(2, 3, figsize=(13.5, 7.0), constrained_layout=True)
-        for axis, (column, label, logarithmic) in zip(axes.flatten(), panels):
+        for axis, (column, label, logarithmic) in zip(
+            axes.flatten(), panels, strict=True,
+        ):
             axis.plot(table["max_node"], table[column], "o-", color="#2166ac", linewidth=1.4)
             axis.set_xscale("log")
             if logarithmic:
@@ -676,7 +684,7 @@ def plot_embedding_stability(stability: pd.DataFrame, output_path: Path) -> None
 
     with plt.rc_context(PLOT_STYLE):
         figure, axes = plt.subplots(1, 5, figsize=(19.0, 4.2), constrained_layout=True)
-        for axis, (metric, label) in zip(axes, metrics):
+        for axis, (metric, label) in zip(axes, metrics, strict=True):
             floor_mean = float(within[metric].mean())
             floor_std = float(within[metric].std(ddof=0))
             axis.axhspan(
@@ -688,8 +696,14 @@ def plot_embedding_stability(stability: pd.DataFrame, output_path: Path) -> None
             )
             axis.axhline(floor_mean, color="#525252", linestyle="--", linewidth=1.1)
             positions = np.arange(len(cross_labels))
-            means = [float(cross[cross["scale_label"] == name][metric].mean()) for name in cross_labels]
-            errors = [float(cross[cross["scale_label"] == name][metric].std(ddof=0)) for name in cross_labels]
+            means = [
+                float(cross[cross["scale_label"] == name][metric].mean())
+                for name in cross_labels
+            ]
+            errors = [
+                float(cross[cross["scale_label"] == name][metric].std(ddof=0))
+                for name in cross_labels
+            ]
             axis.errorbar(
                 positions, means, yerr=errors, fmt="o", color="#762a83", capsize=4, markersize=7,
                 label="Cross-scale (seed matched)",
@@ -780,10 +794,19 @@ def plot_cluster_stability(
             axis.axhline(floor_mean, color="#525252", linestyle="--", linewidth=1.1)
             labels = sorted(cross["scale_label"].unique())
             positions = np.arange(len(labels))
-            means = [float(cross[cross["scale_label"] == name][metric].mean()) for name in labels]
-            errors = [float(cross[cross["scale_label"] == name][metric].std(ddof=0)) for name in labels]
-            axis.errorbar(positions, means, yerr=errors, fmt="o", color="#762a83", capsize=4, markersize=7,
-                          label="Cross-scale (seed matched)")
+            means = [
+                float(cross[cross["scale_label"] == name][metric].mean())
+                for name in labels
+            ]
+            errors = [
+                float(cross[cross["scale_label"] == name][metric].std(ddof=0))
+                for name in labels
+            ]
+            axis.errorbar(
+                positions, means, yerr=errors, fmt="o",
+                color="#762a83", capsize=4, markersize=7,
+                label="Cross-scale (seed matched)",
+            )
             axis.set_xticks(positions)
             axis.set_xticklabels(labels, rotation=20, ha="right")
             axis.set_ylabel(label)
@@ -796,7 +819,11 @@ def plot_cluster_stability(
             curve = group.groupby("n_clusters")["silhouette_score"]
             ks = sorted(curve.groups)
             means = [float(curve.get_group(k).mean()) for k in ks]
-            axis.plot(ks, means, "o-", color=SCALE_COLOURS[max_node], label=f"N={max_node}", linewidth=1.4)
+            axis.plot(
+                ks, means, "o-",
+                color=SCALE_COLOURS[max_node],
+                label=f"N={max_node}", linewidth=1.4,
+            )
         axis.set_xlabel("Number of clusters k")
         axis.set_ylabel("Silhouette score")
         axis.set_title("KMeans silhouette curve by scale\n(mean over seeds)", fontsize=10)
@@ -813,7 +840,11 @@ def plot_prediction_scaling(prediction: pd.DataFrame, output_path: Path) -> None
     targets = sorted(prediction["target_property"].unique())
     scopes = ["full_n", "matched_core"]
     with plt.rc_context(PLOT_STYLE):
-        figure, axes = plt.subplots(2, len(targets), figsize=(4.0 * len(targets), 7.4), constrained_layout=True)
+        figure, axes = plt.subplots(
+            2, len(targets),
+            figsize=(4.0 * len(targets), 7.4),
+            constrained_layout=True,
+        )
         axes = np.atleast_2d(axes)
         for row, scope in enumerate(scopes):
             subset = prediction[prediction["evaluation_scope"] == scope]
@@ -822,7 +853,10 @@ def plot_prediction_scaling(prediction: pd.DataFrame, output_path: Path) -> None
                 target_rows = subset[subset["target_property"] == target]
                 for model, group in target_rows.groupby("model_name"):
                     ordered = group.sort_values("max_node")
-                    axis.plot(ordered["max_node"], ordered["r2_oof"], "o-", label=model, linewidth=1.4)
+                    axis.plot(
+                        ordered["max_node"], ordered["r2_oof"],
+                        "o-", label=model, linewidth=1.4,
+                    )
                 axis.set_xscale("log")
                 axis.set_xlabel("Domain bound N")
                 axis.set_ylabel("Out-of-fold R²")
@@ -856,10 +890,15 @@ def plot_convergence_summary(summary: pd.DataFrame, output_path: Path) -> None:
                 )
                 for q in quantities
             ]
-            axis.bar(positions + (index - len(labels) / 2 + 0.5) * width, values, width, label=label, alpha=0.9)
+            axis.bar(
+                positions + (index - len(labels) / 2 + 0.5) * width,
+                values, width, label=label, alpha=0.9,
+            )
         axis.axhline(1.0, color="#252525", linestyle="--", linewidth=1.2)
         axis.text(
-            len(quantities) - 0.4, 1.02, "parity with reseeding", fontsize=8, color="#252525", ha="right"
+            len(quantities) - 0.4, 1.02,
+            "parity with reseeding",
+            fontsize=8, color="#252525", ha="right",
         )
         axis.set_xticks(positions)
         axis.set_xticklabels(quantities, rotation=25, ha="right")
@@ -921,7 +960,9 @@ def compute_scale_summary_markdown(tables: dict[str, pd.DataFrame]) -> str:
     return "\n".join(lines)
 
 
-def save_comparison_artifacts(tables: dict[str, pd.DataFrame], output_directory: str | Path) -> dict[str, Path]:
+def save_comparison_artifacts(
+    tables: dict[str, pd.DataFrame], output_directory: str | Path,
+) -> dict[str, Path]:
     """Write every comparison table as CSV and return the written paths."""
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
