@@ -44,7 +44,11 @@ def graph_summary(graph: nx.DiGraph) -> pd.Series:
             "roots": sum(bool(data.get("root", False)) for _, data in graph.nodes(data=True)),
             "maximum_node": int(nodes.max()) if nodes.size else np.nan,
             "maximum_inverse_depth": int(max(depths)) if depths else np.nan,
-            "mean_in_degree": float(np.mean([degree for _, degree in graph.in_degree()])) if nodes.size else np.nan,
+            "mean_in_degree": (
+                float(np.mean([degree for _, degree in graph.in_degree()]))
+                if nodes.size
+                else np.nan
+            ),
         },
         dtype=object,
     )

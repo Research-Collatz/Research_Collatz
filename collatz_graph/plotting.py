@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 import networkx as nx
+from matplotlib.axes import Axes
 
 LOGGER = logging.getLogger(__name__)
 
