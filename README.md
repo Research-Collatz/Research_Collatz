@@ -264,16 +264,14 @@ ruff check .
 mypy collatz_graph
 ```
 
-Validation on 2026-09-07: editable installation with the `dev` extra succeeds,
-and the full test suite passes (`25 passed`, with two existing sklearn future
-warnings). Ruff passes for the files changed by the current PR. Repository-wide
-Ruff still reports pre-existing violations elsewhere. Mypy reports the same 68
-pre-existing errors as `origin/main`.
+**Current status (2026-09-18):** Editable installation with the `dev` extra
+succeeds. The full test suite passes (`28 passed`, with two existing sklearn
+future warnings). **Ruff passes repository-wide with zero violations** across
+all source files, tests, notebooks, and CLI scripts. Mypy reports 68 pre-existing
+errors in `collatz_graph/` that remain informational.
 
 Continuous integration runs the full test suite on Python 3.10 through 3.13.
-Ruff is required for the maintained pipeline and reproducibility files;
-repository-wide Ruff and mypy remain informational until their existing debt is
-reduced.
+Ruff, pytest, and package build checks are required for all PRs.
 
 ### Bounded inverse-graph truncation
 
