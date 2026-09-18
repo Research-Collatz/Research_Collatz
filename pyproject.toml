@@ -21,6 +21,7 @@ dev = [
     "ruff",
     "mypy",
     "scikit-learn",
+    "build",
 ]
 
 [project.scripts]
