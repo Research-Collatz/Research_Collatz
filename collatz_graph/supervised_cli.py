@@ -1,4 +1,4 @@
-"""Command-line interface for supervised prediction of Collatz properties from Node2Vec embeddings."""
+"""CLI for supervised prediction from Node2Vec embeddings."""
 
 from __future__ import annotations
 
@@ -39,7 +39,9 @@ def execute_supervised_pipeline(
         ("level_set", False),
     ]
 
-    LOGGER.info("Executing 3-Fold Cross-Validation across models (RandomForest, XGBoost, LightGBM)...")
+    LOGGER.info(
+        "Executing 3-Fold Cross-Validation across models (RandomForest, XGBoost, LightGBM)..."
+    )
     metrics_df, importance_df, oof_preds_dict = run_all_supervised_experiments(
         embeddings=embeddings,
         features_df=features_df,
@@ -94,8 +96,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Predict Collatz properties from Node2Vec embeddings using supervised ML."
     )
-    parser.add_argument("--run-dir", type=Path, required=True, help="Directory containing node2vec artifacts.")
-    parser.add_argument("--output-dir", type=Path, required=True, help="Directory to save output artifacts.")
+    parser.add_argument(
+        "--run-dir", type=Path, required=True, help="Directory containing node2vec artifacts."
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, required=True, help="Directory to save output artifacts."
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
     args = parser.parse_args()
 

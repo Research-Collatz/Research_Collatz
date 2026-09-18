@@ -8,14 +8,13 @@ binary length, level set, etc.), and generate structured tables and visualizatio
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm
 import numpy as np
 import pandas as pd
+from matplotlib.colors import BoundaryNorm
 from scipy import stats
 from sklearn.cluster import DBSCAN, HDBSCAN, KMeans
 from sklearn.feature_selection import mutual_info_classif
@@ -24,8 +23,6 @@ from sklearn.metrics import (
     davies_bouldin_score,
     silhouette_score,
 )
-
-from .embedding_plots import fit_umap, load_embedding_features
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +43,9 @@ PLOT_STYLE = {
 }
 
 
-def _subsample_indices(n_samples: int, subsample: int | None, random_state: int) -> np.ndarray | None:
+def _subsample_indices(
+    n_samples: int, subsample: int | None, random_state: int
+) -> np.ndarray | None:
     """Return sorted row indices for a reproducible subsample, or None for all rows."""
     if subsample is None or subsample >= n_samples:
         return None
@@ -83,7 +82,10 @@ def run_kmeans_sweep(
         if silhouette_sample_size is not None and silhouette_sample_size < n_samples:
             sil = float(
                 silhouette_score(
-                    embeddings, labels, sample_size=silhouette_sample_size, random_state=random_state
+                    embeddings,
+                    labels,
+                    sample_size=silhouette_sample_size,
+                    random_state=random_state,
                 )
             )
         else:
@@ -349,7 +351,9 @@ def compute_property_association_tests(
         vals = valid_df[prop].to_numpy(dtype=float)
 
         # Group data by cluster
-        groups = [group[prop].dropna().to_numpy(dtype=float) for _, group in valid_df.groupby("cluster")]
+        groups = [
+            group[prop].dropna().to_numpy(dtype=float) for _, group in valid_df.groupby("cluster")
+        ]
         groups = [g for g in groups if len(g) > 0]
 
         if len(groups) < 2:
@@ -363,7 +367,9 @@ def compute_property_association_tests(
 
         # Mutual Information
         X = vals.reshape(-1, 1)
-        mi = float(mutual_info_classif(X, labels, discrete_features=False, random_state=random_state)[0])
+        mi = float(
+            mutual_info_classif(X, labels, discrete_features=False, random_state=random_state)[0]
+        )
 
         results.append(
             {
@@ -424,7 +430,7 @@ def plot_umap_clusters(
             c_labels = labels[cluster_mask]
             unique_cids = sorted(set(c_labels))
             n_clusters = len(unique_cids)
-            
+
             if n_clusters <= 10:
                 cmap = plt.get_cmap("tab10", n_clusters)
             elif n_clusters <= 20:
@@ -433,7 +439,7 @@ def plot_umap_clusters(
                 cmap = plt.get_cmap("turbo", n_clusters)
 
             norm = BoundaryNorm(np.arange(-0.5, n_clusters + 0.5), ncolors=n_clusters)
-            
+
             # Map cluster IDs to contiguous 0..n_clusters-1 for qualitative colormap
             cluster_id_map = {cid: idx for idx, cid in enumerate(unique_cids)}
             mapped_labels = np.array([cluster_id_map[cid] for cid in c_labels])
@@ -449,7 +455,7 @@ def plot_umap_clusters(
                 linewidths=0,
                 rasterized=True,
             )
-            
+
             if n_clusters <= 20:
                 ticks = np.arange(n_clusters)
                 tick_labels = [str(cid) for cid in unique_cids]
@@ -457,7 +463,7 @@ def plot_umap_clusters(
                 cbar.ax.set_yticklabels(tick_labels)
             else:
                 cbar = fig.colorbar(points, ax=ax, pad=0.02)
-                
+
             cbar.set_label("Cluster ID")
 
         ax.set_title(title, pad=10)
@@ -508,7 +514,12 @@ def plot_property_distributions(
                 tick_labels=[str(c) for c in clusters],
                 patch_artist=True,
                 showmeans=True,
-                meanprops={"marker": "o", "markerfacecolor": "red", "markeredgecolor": "red", "markersize": 4},
+                meanprops={
+                    "marker": "o",
+                    "markerfacecolor": "red",
+                    "markeredgecolor": "red",
+                    "markersize": 4,
+                },
                 flierprops={"marker": ".", "markersize": 2, "alpha": 0.3},
             )
             for box in bp["boxes"]:
@@ -517,7 +528,11 @@ def plot_property_distributions(
             ax.set_title(f"{label} {'(log10)' if logarithmic else ''} by Cluster", fontsize=11)
             ax.set_xlabel("Cluster ID")
             ax.set_ylabel(f"log10({label})" if logarithmic else label)
-            ax.tick_params(axis="x", rotation=90 if len(clusters) > 15 else 0, labelsize=7 if len(clusters) > 20 else 9)
+            ax.tick_params(
+                axis="x",
+                rotation=90 if len(clusters) > 15 else 0,
+                labelsize=7 if len(clusters) > 20 else 9,
+            )
             ax.spines[["top", "right"]].set_visible(False)
 
         # Hide empty axes if n_props is odd
@@ -542,13 +557,34 @@ def plot_metrics_comparison(
 
         # Silhouette score comparison
         ax = axes[0]
-        ax.plot(kmeans_df["n_clusters"], kmeans_df["silhouette_score"], "o-", label="KMeans", color="#1f77b4")
+        ax.plot(
+            kmeans_df["n_clusters"],
+            kmeans_df["silhouette_score"],
+            "o-",
+            label="KMeans",
+            color="#1f77b4",
+        )
         if not hdbscan_df.empty:
             valid_h = hdbscan_df.dropna(subset=["silhouette_score"])
-            ax.scatter(valid_h["n_clusters"], valid_h["silhouette_score"], c="#2ca02c", label="HDBSCAN", marker="s", s=40)
+            ax.scatter(
+                valid_h["n_clusters"],
+                valid_h["silhouette_score"],
+                c="#2ca02c",
+                label="HDBSCAN",
+                marker="s",
+                s=40,
+            )
         if not dbscan_df.empty:
             valid_d = dbscan_df.dropna(subset=["silhouette_score"])
-            ax.scatter(valid_d["n_clusters"], valid_d["silhouette_score"], c="#ff7f0e", label="DBSCAN", marker="^", s=30, alpha=0.7)
+            ax.scatter(
+                valid_d["n_clusters"],
+                valid_d["silhouette_score"],
+                c="#ff7f0e",
+                label="DBSCAN",
+                marker="^",
+                s=30,
+                alpha=0.7,
+            )
 
         ax.set_title("Silhouette Score (Higher is better)")
         ax.set_xlabel("Number of Clusters (k)")
@@ -558,10 +594,23 @@ def plot_metrics_comparison(
 
         # Calinski-Harabasz score comparison
         ax = axes[1]
-        ax.plot(kmeans_df["n_clusters"], kmeans_df["calinski_harabasz_score"], "o-", label="KMeans", color="#1f77b4")
+        ax.plot(
+            kmeans_df["n_clusters"],
+            kmeans_df["calinski_harabasz_score"],
+            "o-",
+            label="KMeans",
+            color="#1f77b4",
+        )
         if not hdbscan_df.empty:
             valid_h = hdbscan_df.dropna(subset=["calinski_harabasz_score"])
-            ax.scatter(valid_h["n_clusters"], valid_h["calinski_harabasz_score"], c="#2ca02c", label="HDBSCAN", marker="s", s=40)
+            ax.scatter(
+                valid_h["n_clusters"],
+                valid_h["calinski_harabasz_score"],
+                c="#2ca02c",
+                label="HDBSCAN",
+                marker="s",
+                s=40,
+            )
         ax.set_title("Calinski-Harabasz Score (Higher is better)")
         ax.set_xlabel("Number of Clusters (k)")
         ax.set_ylabel("CH Index")
@@ -570,10 +619,23 @@ def plot_metrics_comparison(
 
         # Davies-Bouldin score comparison
         ax = axes[2]
-        ax.plot(kmeans_df["n_clusters"], kmeans_df["davies_bouldin_score"], "o-", label="KMeans", color="#1f77b4")
+        ax.plot(
+            kmeans_df["n_clusters"],
+            kmeans_df["davies_bouldin_score"],
+            "o-",
+            label="KMeans",
+            color="#1f77b4",
+        )
         if not hdbscan_df.empty:
             valid_h = hdbscan_df.dropna(subset=["davies_bouldin_score"])
-            ax.scatter(valid_h["n_clusters"], valid_h["davies_bouldin_score"], c="#2ca02c", label="HDBSCAN", marker="s", s=40)
+            ax.scatter(
+                valid_h["n_clusters"],
+                valid_h["davies_bouldin_score"],
+                c="#2ca02c",
+                label="HDBSCAN",
+                marker="s",
+                s=40,
+            )
         ax.set_title("Davies-Bouldin Score (Lower is better)")
         ax.set_xlabel("Number of Clusters (k)")
         ax.set_ylabel("DB Index")
@@ -597,7 +659,7 @@ def plot_property_heatmap(
         return
 
     pivot = clean_df.pivot(index="cluster", columns="property", values="mean")
-    
+
     # Standardize (z-score normalize) properties across clusters for fair visual comparison
     z_pivot = (pivot - pivot.mean()) / (pivot.std().replace(0, 1.0))
 
@@ -614,7 +676,15 @@ def plot_property_heatmap(
         for i in range(len(z_pivot.index)):
             for j in range(len(z_pivot.columns)):
                 val = z_pivot.iloc[i, j]
-                ax.text(j, i, f"{val:+.2f}", ha="center", va="center", color="black" if abs(val) < 1.5 else "white", fontsize=8)
+                ax.text(
+                    j,
+                    i,
+                    f"{val:+.2f}",
+                    ha="center",
+                    va="center",
+                    color="black" if abs(val) < 1.5 else "white",
+                    fontsize=8,
+                )
 
         cbar = fig.colorbar(cax, ax=ax, pad=0.02)
         cbar.set_label("Standardized Feature Z-Score")

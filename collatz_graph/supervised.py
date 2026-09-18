@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -18,16 +19,17 @@ import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
 from sklearn.model_selection import KFold
-from time import perf_counter
 
 try:
     from xgboost import XGBRegressor
+
     HAS_XGBOOST = True
 except ImportError:
     HAS_XGBOOST = False
 
 try:
     from lightgbm import LGBMRegressor
+
     HAS_LIGHTGBM = True
 except ImportError:
     HAS_LIGHTGBM = False
@@ -57,12 +59,13 @@ def instantiate_model(model_name: str, random_state: int = 42) -> Any:
             bootstrap=True,
             random_state=random_state,
             n_jobs=-1,
-        )    
+        )
     elif model_name == "XGBoost":
         if not HAS_XGBOOST:
             raise ImportError("xgboost package is required for XGBoost model.")
         try:
             import torch
+
             device = "cuda" if torch.cuda.is_available() else "cpu"
         except ImportError:
             device = "cpu"
@@ -95,10 +98,12 @@ def instantiate_model(model_name: str, random_state: int = 42) -> Any:
         raise ValueError(f"Unknown model name: {model_name}")
 
 
-def compute_accuracy_metrics(y_true: np.ndarray, y_pred: np.ndarray, is_log_scale: bool = False) -> dict[str, float]:
+def compute_accuracy_metrics(
+    y_true: np.ndarray, y_pred: np.ndarray, is_log_scale: bool = False
+) -> dict[str, float]:
     """Compute exact and tolerance accuracy metrics."""
     if is_log_scale:
-        # Relative error tolerance within 10% (0.1 in log10 space corresponds to ~25% ratio, 0.0414 is ~10%)
+        # 0.1 in log10 space is roughly 25% ratio; 0.0414 is roughly 10%.
         within_10pct = float(np.mean(np.abs(y_true - y_pred) <= 0.0414))
         within_25pct = float(np.mean(np.abs(y_true - y_pred) <= 0.1))
         return {
@@ -145,7 +150,6 @@ def evaluate_property_prediction(
     rmse_folds: list[float] = []
 
     for fold, (train_idx, test_idx) in enumerate(kf.split(embeddings)):
-
         LOGGER.info(
             "Starting Fold %d/%d (%s)",
             fold + 1,
@@ -319,7 +323,9 @@ def plot_model_comparison(metrics_df: pd.DataFrame, output_path: Path) -> None:
         for i, model in enumerate(models):
             m_df = metrics_df[metrics_df["model_name"] == model]
             mae_vals = [m_df[m_df["target_property"] == t]["mae_oof"].values[0] for t in targets]
-            ax.bar(x + (i - len(models) / 2 + 0.5) * width, mae_vals, width, label=model, alpha=0.85)
+            ax.bar(
+                x + (i - len(models) / 2 + 0.5) * width, mae_vals, width, label=model, alpha=0.85
+            )
 
         ax.set_title("Mean Absolute Error (MAE) by Target", fontsize=11)
         ax.set_ylabel("MAE")
@@ -346,7 +352,9 @@ def plot_prediction_scatters(
     n_rows = (n_targets + 1) // n_cols
 
     with plt.rc_context(PLOT_STYLE):
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(11, 4.5 * n_rows), constrained_layout=True)
+        fig, axes = plt.subplots(
+            n_rows, n_cols, figsize=(11, 4.5 * n_rows), constrained_layout=True
+        )
         axes = axes.flatten()
 
         for idx, (prop, log_transform) in enumerate(target_properties):
@@ -361,12 +369,16 @@ def plot_prediction_scatters(
 
             y_pred = oof_predictions_dict[key]
 
-            ax.scatter(y_actual, y_pred, s=8, alpha=0.4, c="#1f77b4", edgecolors="none", rasterized=True)
+            ax.scatter(
+                y_actual, y_pred, s=8, alpha=0.4, c="#1f77b4", edgecolors="none", rasterized=True
+            )
 
             # Identity line
             min_val = min(np.min(y_actual), np.min(y_pred))
             max_val = max(np.max(y_actual), np.max(y_pred))
-            ax.plot([min_val, max_val], [min_val, max_val], "r--", linewidth=1.2, label="Ideal (y=x)")
+            ax.plot(
+                [min_val, max_val], [min_val, max_val], "r--", linewidth=1.2, label="Ideal (y=x)"
+            )
 
             title_suffix = " (log10)" if log_transform else ""
             ax.set_title(f"Actual vs Predicted: {prop}{title_suffix} ({model_name})", fontsize=11)
@@ -383,7 +395,9 @@ def plot_prediction_scatters(
         plt.close(fig)
 
 
-def plot_feature_importance_top(importance_df: pd.DataFrame, output_path: Path, top_n: int = 10) -> None:
+def plot_feature_importance_top(
+    importance_df: pd.DataFrame, output_path: Path, top_n: int = 10
+) -> None:
     """Plot top embedding dimensions by feature importance across targets."""
     targets = importance_df["target_property"].unique()
     models = importance_df["model_name"].unique()
@@ -401,7 +415,11 @@ def plot_feature_importance_top(importance_df: pd.DataFrame, output_path: Path, 
 
         for idx, prop in enumerate(targets):
             ax = axes[idx]
-            prop_df = sub_df[sub_df["target_property"] == prop].sort_values("importance", ascending=False).head(top_n)
+            prop_df = (
+                sub_df[sub_df["target_property"] == prop]
+                .sort_values("importance", ascending=False)
+                .head(top_n)
+            )
 
             y_pos = np.arange(len(prop_df))
             ax.barh(y_pos, prop_df["importance"], align="center", color="#2ca02c", alpha=0.85)
