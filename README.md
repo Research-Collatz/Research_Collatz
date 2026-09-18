@@ -74,7 +74,7 @@ Pandas DataFrame with one row per node:
 - `total_stopping_time`: the least $k \ge 0$ such that $T^k(n) = 1$, when the
 	trajectory reaches $1$; the implementation reports the computed trajectory
 	length for finite experiments.
-- `maximum_excursion`: $\max \{ T^j(n) : 0 \le j \le \text{total\_stopping\_time} \}$, including
+- `maximum_excursion`: $\max \{ T^j(n) : 0 \le j \le k \}$ where $k$ is the total stopping time, including
 	the starting value.
 - `binary_length`: $\lfloor \log_2(n) \rfloor + 1$, the number of bits in the ordinary
 	binary representation of $n$.
