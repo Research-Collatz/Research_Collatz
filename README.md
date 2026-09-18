@@ -243,6 +243,16 @@ coordinates, and their aligned feature table under the run's `umap/` folder.
 
 Graph results depend on the selected root set and node budget. A bounded inverse graph can omit predecessors beyond the budget, so degree and depth statistics are censored. Layout coordinates are visualization artifacts; the plotting helper uses a fixed NetworkX seed for stable figures but those coordinates have no mathematical meaning. Report configuration values, package version, Python version, and dependency versions with published results.
 
+### Experiment manifests
+
+Experiment commands write a self-describing output directory containing
+`config.json` and `metadata.json`. The configuration records the actual graph
+scales, seeds, stages, and Node2Vec parameters used for the run. The metadata
+records the Git commit, Python/platform details, package versions, and optional
+Torch/CUDA/GPU information. Standard artifact directories are created for
+`graph/`, `features/`, `statistics/`, `embeddings/`, and `geometry/`; the
+multi-scale pipeline also uses `analysis/` for comparisons.
+
 ## Development quality checks
 
 Install development dependencies and run:

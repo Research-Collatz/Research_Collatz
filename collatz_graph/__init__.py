@@ -23,7 +23,11 @@ from .node2vec import (
     save_node2vec_result,
     train_node2vec,
 )
-from .reproducibility import get_environment_metadata, get_git_commit_sha
+from .reproducibility import (
+    get_environment_metadata,
+    get_git_commit_sha,
+    write_experiment_manifest,
+)
 from .statistics import (
     GraphStatisticsResult,
     compute_graph_statistics,
@@ -60,4 +64,5 @@ __all__ = [
     "save_node2vec_result",
     "get_environment_metadata",
     "get_git_commit_sha",
+    "write_experiment_manifest",
 ]
