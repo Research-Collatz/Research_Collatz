@@ -6,14 +6,14 @@ A reproducible Python research project for exploratory computation on the invers
 
 The forward Collatz map is
 
-\[
-T(n) = \begin{cases} n/2, & n \equiv 0 \pmod 2,\\ 3n+1, & n \equiv 1 \pmod 2.\end{cases}
-\]
+$$
+T(n) = \begin{cases} n/2, & n \equiv 0 \pmod{2} \\\\ 3n+1, & n \equiv 1 \pmod{2} \end{cases}
+$$
 
-The directed graph stores forward edges `u -> T(u)`. Inverse exploration starts from a target node and enumerates its valid predecessors:
+The directed graph stores forward edges $u \to T(u)$. Inverse exploration starts from a target node and enumerates its valid predecessors:
 
-- `2n` is always a predecessor because `T(2n) = n`.
-- `(n - 1) / 3` is a predecessor only when it is a positive odd integer.
+- $2n$ is always a predecessor because $T(2n) = n$.
+- $(n - 1) / 3$ is a predecessor only when it is a positive odd integer.
 
 All arithmetic is integer-exact. Graph expansion is bounded by an explicit node budget; the budget is a computational truncation, not a mathematical claim about the infinite graph.
 
@@ -38,13 +38,13 @@ From a fresh Colab runtime, clone the repository and install dependencies:
 
 Then open `notebooks/01_inverse_graph_exploration.ipynb`. The notebook inserts the repository root into `sys.path`, so package imports are explicit and reusable.
 
-## Build and export the finite graph on `1..N`
+## Build and export the finite graph on $1..N$
 
-The bounded-domain API stores forward-oriented edges `u -> T(u)` only when
-both endpoints are in `1..N`. It creates nodes from a `range` iterator and
-evaluates one successor per source, so construction takes `O(N)` time. If
-`E_N` edges remain inside the domain, NetworkX storage is `O(N + E_N)` and
-`E_N <= N`. Export uses NetworkX node and edge views directly, avoiding
+The bounded-domain API stores forward-oriented edges $u \to T(u)$ only when
+both endpoints are in $\{1, \dots, N\}$. It creates nodes from a `range` iterator and
+evaluates one successor per source, so construction takes $O(N)$ time. If
+$E_N$ edges remain inside the domain, NetworkX storage is $O(N + E_N)$ and
+$E_N \le N$. Export uses NetworkX node and edge views directly, avoiding
 duplicate edge or node lists in memory.
 
 ```python
@@ -59,33 +59,33 @@ This writes `nodes_100000.csv`, `edges_100000.csv`, and
 and edge counts, measured runtime, Python version, and NetworkX version.
 
 The finite graph is an induced subgraph of the positive-integer Collatz
-graph. An odd source can map above `N`; that edge is intentionally omitted,
+graph. An odd source can map above $N$; that edge is intentionally omitted,
 not clipped. This distinction matters when interpreting boundary degree
 statistics.
 
 ## Node features
 
-For a node `n`, the feature extractor in `collatz_graph.features` returns a
+For a node $n$, the feature extractor in `collatz_graph.features` returns a
 Pandas DataFrame with one row per node:
 
-- `stopping_time`: the least `k >= 1` such that `T^k(n) < n`; it is `0` for
-	the root `1`. This is the usual stopping time, not necessarily the time to
-	reach `1`.
-- `total_stopping_time`: the least `k >= 0` such that `T^k(n) = 1`, when the
-	trajectory reaches `1`; the implementation reports the computed trajectory
+- `stopping_time`: the least $k \ge 1$ such that $T^k(n) < n$; it is $0$ for
+	the root $1$. This is the usual stopping time, not necessarily the time to
+	reach $1$.
+- `total_stopping_time`: the least $k \ge 0$ such that $T^k(n) = 1$, when the
+	trajectory reaches $1$; the implementation reports the computed trajectory
 	length for finite experiments.
-- `maximum_excursion`: `max(T^j(n) : 0 <= j <= total_stopping_time)`, including
+- `maximum_excursion`: $\max \{ T^j(n) : 0 \le j \le \text{total\_stopping\_time} \}$, including
 	the starting value.
-- `binary_length`: `floor(log_2(n)) + 1`, the number of bits in the ordinary
-	binary representation of `n`.
+- `binary_length`: $\lfloor \log_2(n) \rfloor + 1$, the number of bits in the ordinary
+	binary representation of $n$.
 - `parity_vector_length`: the number of parity decisions in the trajectory to
-	`1`; with a parity vector containing one bit per transition, this equals
+	$1$; with a parity vector containing one bit per transition, this equals
 	`total_stopping_time`.
 - `in_degree`: the number of retained forward predecessors in the finite
 	graph.
-- `out_degree`: zero or one, indicating whether `T(n)` remains in `1..N`.
-- `distance_from_root`: shortest directed distance from `n` to root `1` in the
-	finite graph; `-1` indicates that truncation removes a required edge or the
+- `out_degree`: zero or one, indicating whether $T(n)$ remains in $\{1, \dots, N\}$.
+- `distance_from_root`: shortest directed distance from $n$ to root $1$ in the
+	finite graph; $-1$ indicates that truncation removes a required edge or the
 	node cannot reach the root.
 - `ancestor_count`: the number of nodes whose finite forward orbit reaches
 	the node, including the node itself. Nodes in the same directed cycle share
@@ -103,9 +103,9 @@ features = compute_node_features(graph, show_progress=True)
 save_node_features(features, "outputs/node_features_100000.csv")
 ```
 
-The structural passes are linear in `N + E_N`; arithmetic work is linear in
+The structural passes are linear in $N + E_N$; arithmetic work is linear in
 the number of trajectory transitions evaluated. Fixed-width NumPy arrays,
-memoization for values inside `1..N`, and streamed progress/export handling
+memoization for values inside $\{1, \dots, N\}$, and streamed progress/export handling
 keep avoidable memory overhead low for million-node experiments. NetworkX and
 the final Pandas DataFrame still require memory proportional to the graph and
 table, respectively.
@@ -130,8 +130,8 @@ nodes; the method and seed are recorded in the summary table.
 
 Weak components ignore edge direction and describe undirected connectivity;
 strong components require directed reachability in both directions. A finite
-domain has many boundary components because edges leaving `1..N` are omitted.
-Tree depth is shortest distance from root `1` in the reversed graph, meaning
+domain has many boundary components because edges leaving $\{1, \dots, N\}$ are omitted.
+Tree depth is shortest distance from root $1$ in the reversed graph, meaning
 inverse-generation depth. The reported diameter is the exact undirected
 diameter of the largest weak component when that component is below the
 configured feasibility limit. Directed diameter is generally infinite for
@@ -140,7 +140,7 @@ this graph and is not substituted silently.
 The spectral table reports an edge-wise power-iteration estimate of the
 adjacency spectral radius, not an exact dense eigendecomposition, together
 with the exact adjacency Frobenius norm and maximum out-degree. This avoids
-forming an `N x N` matrix and is suitable for sparse million-node graphs.
+forming an $N \times N$ matrix and is suitable for sparse million-node graphs.
 
 Generate all tables and figures:
 
@@ -167,8 +167,8 @@ python -m pytest
 
 ## Node2Vec embeddings on the inverse graph
 
-The package trains skip-gram Node2Vec embeddings on the bounded graph.  The
-stored graph orientation is forward (`u -> T(u)`), while Node2Vec walks are
+The package trains skip-gram Node2Vec embeddings on the bounded graph. The
+stored graph orientation is forward ($u \to T(u)$), while Node2Vec walks are
 **inverse by default**, moving from a number to its retained predecessors.
 This is the appropriate direction for representing the inverse Collatz tree.
 
@@ -182,8 +182,8 @@ python -m collatz_graph.node2vec_cli --max-node 10000 --seed 20260722 --backend 
 Each run is stored at `outputs/node2vec_N10000_seed20260722/` with:
 
 - `node2vec_embeddings.npy`: the returned `float32` matrix `(n_nodes, 128)`.
-- `node2vec_nodes.csv`: row-to-node mapping; row `i` in the matrix represents
-  this file's `i`th node.
+- `node2vec_nodes.csv`: row-to-node mapping; row $i$ in the matrix represents
+  this file's $i$-th node.
 - `node2vec_training.csv` and `node2vec_training_loss.png`: per-epoch loss and
   a publication-resolution convergence plot.
 - `node2vec_metadata.json`: exact hyperparameters, graph and walk orientation,
@@ -215,7 +215,7 @@ parameter: lower values bias toward nodes farther from the previous node
 Both defaults make the second-order walk unbiased apart from graph structure.
 
 `negative_samples=5` draws five noise contexts for every observed pair. Noise
-nodes are sampled in proportion to total walk-graph degree raised to `0.75`,
+nodes are sampled in proportion to total walk-graph degree raised to $0.75$,
 the standard word2vec/Node2Vec smoothing rule. `epochs=3` is the number of SGD
 passes over generated pairs, `learning_rate=0.025` is the SGD step size, and
 `batch_size=512` bounds the in-memory positive-pair batch and trades memory for
@@ -235,7 +235,7 @@ python -m collatz_graph.embedding_plots_cli outputs/node2vec_N10000_seed20260722
 One UMAP layout is shared by all five figures (`n_neighbors=30`,
 `min_dist=0.15`, cosine metric, and seed `20260722`), so locations are
 comparable between colours. `level_set` means the inverse-tree breadth-first
-distance from node 1. Nodes outside the finite root component receive `-1` and
+distance from node $1$. Nodes outside the finite root component receive $-1$ and
 are rendered in grey. The command saves 450-DPI PNGs, vector PDFs, UMAP
 coordinates, and their aligned feature table under the run's `umap/` folder.
 
