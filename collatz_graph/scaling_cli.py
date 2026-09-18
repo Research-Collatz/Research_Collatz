@@ -21,9 +21,9 @@ Stages
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict
 import json
 import logging
+from dataclasses import asdict
 from pathlib import Path
 from time import perf_counter
 
