@@ -58,7 +58,9 @@ def test_run_kmeans_sweep(synthetic_embeddings_and_features):
 
 def test_run_dbscan_sweep(synthetic_embeddings_and_features):
     embeddings, _ = synthetic_embeddings_and_features
-    df_results, labels_dict = run_dbscan_sweep(embeddings, eps_list=[0.5, 1.0], min_samples_list=[5])
+    df_results, labels_dict = run_dbscan_sweep(
+        embeddings, eps_list=[0.5, 1.0], min_samples_list=[5]
+    )
 
     assert len(df_results) == 2
     assert set(df_results["algorithm"]) == {"DBSCAN"}
