@@ -1,4 +1,6 @@
-"""CLI for supervised prediction from Node2Vec embeddings."""
+"""Command-line interface for supervised prediction of Collatz properties
+from Node2Vec embeddings.
+"""
 
 from __future__ import annotations
 

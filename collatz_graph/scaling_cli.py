@@ -55,7 +55,6 @@ from .scaling import (
     plot_graph_scaling,
     plot_prediction_scaling,
     plot_umap_grid,
-    restrict_to_nodes,
     save_comparison_artifacts,
     summarise_convergence,
 )
@@ -183,7 +182,9 @@ def stage_cluster(root: Path, runs: list[RunReference], reference_seed: int, for
     """Cluster every run; the full sweep for the reference seed, KMeans for the rest."""
     for run in runs:
         directory = _clustering_directory(root, run.max_node, run.seed)
-        marker = directory / ("clustering_manifest.json" if run.seed == reference_seed else "kmeans_labels.npz")
+        marker = directory / (
+            "clustering_manifest.json" if run.seed == reference_seed else "kmeans_labels.npz"
+        )
         if marker.exists() and not force:
             LOGGER.info("[cluster] skip %s (already present)", run.label)
             continue
@@ -240,7 +241,9 @@ def _matched_core_predictions(
     return pd.concat(frames, ignore_index=True)
 
 
-def stage_supervised(root: Path, runs: list[RunReference], reference_seed: int, force: bool) -> None:
+def stage_supervised(
+    root: Path, runs: list[RunReference], reference_seed: int, force: bool
+) -> None:
     """Run property prediction on the full node set and on the matched common core."""
     for run in runs:
         if run.seed != reference_seed:
@@ -348,20 +351,41 @@ def stage_analysis(root: Path, runs: list[RunReference], reference_seed: int) ->
         comparison / "fig_umap_grid",
     )
 
-    (comparison / "tables.md").write_text(
-        compute_scale_summary_markdown(tables), encoding="utf-8"
-    )
+    (comparison / "tables.md").write_text(compute_scale_summary_markdown(tables), encoding="utf-8")
     LOGGER.info("[analysis] wrote comparison artifacts to %s", comparison)
 
 
 def build_parser() -> argparse.ArgumentParser:
     """Construct the documented command-line interface."""
     parser = argparse.ArgumentParser(description="Run the multi-scale Node2Vec convergence study.")
-    parser.add_argument("--output-root", type=Path, default=Path("outputs/scaling"), help="Directory holding every artifact of the study.")
-    parser.add_argument("--scales", type=int, nargs="+", default=list(SCALES), help="Domain bounds N to evaluate.")
-    parser.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS), help="Random seeds trained at every scale.")
-    parser.add_argument("--stages", nargs="+", choices=STAGES, default=list(STAGES), help="Subset of pipeline stages to execute.")
-    parser.add_argument("--force", action="store_true", help="Recompute stages even when their artifacts already exist.")
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path("outputs/scaling"),
+        help="Directory holding every artifact of the study.",
+    )
+    parser.add_argument(
+        "--scales", type=int, nargs="+", default=list(SCALES), help="Domain bounds N to evaluate."
+    )
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        nargs="+",
+        default=list(SEEDS),
+        help="Random seeds trained at every scale.",
+    )
+    parser.add_argument(
+        "--stages",
+        nargs="+",
+        choices=STAGES,
+        default=list(STAGES),
+        help="Subset of pipeline stages to execute.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Recompute stages even when their artifacts already exist.",
+    )
     return parser
 
 
